@@ -4,7 +4,7 @@
 const images = [
   {
     "file": "DSC_0124.jpg",
-    "col": 2,
+    "col": 1,
     "row": 1
   },
   {
@@ -14,12 +14,7 @@ const images = [
   },
   {
     "file": "DSC_1906.jpg",
-    "col": 1,
-    "row": 1
-  },
-  {
-    "file": "DSC_2317.jpg",
-    "col": 1,
+    "col": 2,
     "row": 1
   },
   {
@@ -30,7 +25,7 @@ const images = [
   {
     "file": "DSC_2362.jpg",
     "col": 1,
-    "row": 2
+    "row": 1
   },
   {
     "file": "DSC_2378.jpg",
@@ -50,7 +45,7 @@ const images = [
   {
     "file": "Movahed-Street-5.jpg",
     "col": 1,
-    "row": 1
+    "row": 2
   },
   {
     "file": "Untitled-2-Edit.jpg",
@@ -60,7 +55,7 @@ const images = [
   {
     "file": "_DSC0010.jpg",
     "col": 2,
-    "row": 2
+    "row": 1
   },
   {
     "file": "_DSC0159.jpg",
@@ -105,7 +100,7 @@ const images = [
   {
     "file": "_DSC0552.jpg",
     "col": 1,
-    "row": 1
+    "row": 2
   },
   {
     "file": "_DSC0573.jpg",
@@ -140,7 +135,7 @@ const images = [
   {
     "file": "_DSC0795.jpg",
     "col": 1,
-    "row": 1
+    "row": 2
   },
   {
     "file": "_DSC0803-Edit.jpg",
@@ -150,12 +145,12 @@ const images = [
   {
     "file": "_DSC0803.jpg",
     "col": 1,
-    "row": 1
+    "row": 2
   },
   {
     "file": "_DSC0816.jpg",
     "col": 1,
-    "row": 1
+    "row": 2
   },
   {
     "file": "_DSC0819.jpg",
@@ -174,7 +169,7 @@ const images = [
   },
   {
     "file": "_DSC0915.jpg",
-    "col": 1,
+    "col": 2,
     "row": 1
   },
   {
@@ -189,7 +184,7 @@ const images = [
   },
   {
     "file": "_DSC0952 copy.jpg",
-    "col": 1,
+    "col": 2,
     "row": 1
   },
   {
@@ -200,7 +195,7 @@ const images = [
   {
     "file": "_DSC0998.jpg",
     "col": 1,
-    "row": 1
+    "row": 2
   },
   {
     "file": "_DSC1009.jpg",
@@ -209,12 +204,12 @@ const images = [
   },
   {
     "file": "_DSC1057.jpg",
-    "col": 1,
+    "col": 2,
     "row": 1
   },
   {
     "file": "_DSC1062.jpg",
-    "col": 2,
+    "col": 1,
     "row": 1
   },
   {
@@ -230,12 +225,12 @@ const images = [
   {
     "file": "_DSC1094.jpg",
     "col": 1,
-    "row": 2
+    "row": 1
   },
   {
     "file": "_DSC1132.jpg",
     "col": 1,
-    "row": 2
+    "row": 1
   },
   {
     "file": "_DSC1397.jpg",
@@ -249,8 +244,8 @@ const images = [
   },
   {
     "file": "_DSC2114 (2).jpg",
-    "col": 2,
-    "row": 2
+    "col": 1,
+    "row": 1
   },
   {
     "file": "_DSC2149.jpg",
@@ -270,7 +265,7 @@ const images = [
   {
     "file": "_DSC2212.jpg",
     "col": 1,
-    "row": 2
+    "row": 1
   },
   {
     "file": "_DSC2309.jpg",
@@ -279,22 +274,22 @@ const images = [
   },
   {
     "file": "_DSC2366.jpg",
-    "col": 1,
+    "col": 2,
     "row": 1
   },
   {
     "file": "_DSC2461.jpg",
-    "col": 2,
-    "row": 2
+    "col": 1,
+    "row": 1
   },
   {
     "file": "_DSC2567.jpg",
-    "col": 2,
-    "row": 2
+    "col": 1,
+    "row": 1
   },
   {
     "file": "_DSC2622.jpg",
-    "col": 1,
+    "col": 2,
     "row": 1
   },
   {
@@ -304,13 +299,13 @@ const images = [
   },
   {
     "file": "_DSC2740.jpg",
-    "col": 1,
-    "row": 1
+    "col": 2,
+    "row": 2
   },
   {
     "file": "_DSC2751.jpg",
-    "col": 1,
-    "row": 1
+    "col": 2,
+    "row": 2
   },
   {
     "file": "_DSC2913.jpg",
@@ -320,11 +315,11 @@ const images = [
   {
     "file": "_DSC3020.jpg",
     "col": 2,
-    "row": 2
+    "row": 1
   },
   {
     "file": "_DSC3092.jpg",
-    "col": 2,
+    "col": 1,
     "row": 1
   },
   {
@@ -349,7 +344,7 @@ const images = [
   },
   {
     "file": "_DSC3572.jpg",
-    "col": 2,
+    "col": 1,
     "row": 2
   },
   {
@@ -374,13 +369,13 @@ const images = [
   },
   {
     "file": "_DSC3637.jpg",
-    "col": 1,
+    "col": 2,
     "row": 1
   },
   {
     "file": "_DSC3651.jpg",
-    "col": 2,
-    "row": 2
+    "col": 1,
+    "row": 1
   },
   {
     "file": "_DSC3738.jpg",
@@ -394,13 +389,13 @@ const images = [
   },
   {
     "file": "_DSC4031.jpg",
-    "col": 2,
+    "col": 1,
     "row": 1
   },
   {
     "file": "_DSC4058.jpg",
     "col": 1,
-    "row": 2
+    "row": 1
   },
   {
     "file": "_DSC4073.jpg",
@@ -410,7 +405,7 @@ const images = [
   {
     "file": "_DSC4087.jpg",
     "col": 1,
-    "row": 2
+    "row": 1
   },
   {
     "file": "_DSC4185.jpg",
@@ -424,12 +419,12 @@ const images = [
   },
   {
     "file": "_DSC4415.jpg",
-    "col": 1,
+    "col": 2,
     "row": 1
   },
   {
     "file": "_DSC4470-3.jpg",
-    "col": 1,
+    "col": 2,
     "row": 1
   },
   {
@@ -439,8 +434,8 @@ const images = [
   },
   {
     "file": "_DSC5005-Edit.jpg",
-    "col": 2,
-    "row": 2
+    "col": 1,
+    "row": 1
   },
   {
     "file": "_DSC5710.jpg",
@@ -449,8 +444,13 @@ const images = [
   },
   {
     "file": "_DSC5764.jpg",
+    "col": 2,
+    "row": 1
+  },
+  {
+    "file": "_DSC6145-Edit.jpg",
     "col": 1,
-    "row": 2
+    "row": 1
   },
   {
     "file": "_DSC6185-Edit.jpg",
@@ -499,8 +499,8 @@ const images = [
   },
   {
     "file": "_DSC7218.jpg",
-    "col": 2,
-    "row": 2
+    "col": 1,
+    "row": 1
   },
   {
     "file": "_DSC7221.jpg",
@@ -509,13 +509,13 @@ const images = [
   },
   {
     "file": "_DSC7226.jpg",
-    "col": 2,
-    "row": 2
+    "col": 1,
+    "row": 1
   },
   {
     "file": "_DSC7239.jpg",
-    "col": 1,
-    "row": 2
+    "col": 2,
+    "row": 1
   },
   {
     "file": "_DSC7457.jpg",
@@ -535,11 +535,11 @@ const images = [
   {
     "file": "_DSC7680-Edit.jpg",
     "col": 1,
-    "row": 2
+    "row": 1
   },
   {
     "file": "_DSC8122.jpg",
-    "col": 2,
+    "col": 1,
     "row": 1
   },
   {
@@ -554,7 +554,7 @@ const images = [
   },
   {
     "file": "_DSC847-Edit.jpg",
-    "col": 1,
+    "col": 2,
     "row": 1
   },
   {
@@ -584,7 +584,7 @@ const images = [
   },
   {
     "file": "_DSC9967 (2).jpg",
-    "col": 2,
+    "col": 1,
     "row": 1
   }
 ];
