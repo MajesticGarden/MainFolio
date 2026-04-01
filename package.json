@@ -1,0 +1,21 @@
+{
+  "name": "nicola-portfolio",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3",
+    "vite": "^8.0.1"
+  },
+  "dependencies": {
+    "@react-spring/web": "^10.0.3",
+    "@use-gesture/react": "^10.3.1",
+    "gsap": "^3.14.2",
+    "react-router-dom": "^7.13.2"
+  }
+}
