@@ -109,6 +109,7 @@ export default function Artboard() {
   }, []);
 
   const [isMono, setIsMono] = useState(false);
+  const [isMoving, setIsMoving] = useState(false);
 
   // Pan state stored in a ref so pointer events never read stale closures
   const pan = useRef({ x: -CELL * 2, y: -CELL * 1 });
@@ -164,6 +165,7 @@ export default function Artboard() {
     if (momentumRaf.current) cancelAnimationFrame(momentumRaf.current);
     e.currentTarget.setPointerCapture(e.pointerId);
     dragging.current = true;
+    setIsMoving(true);
     // Seed lastPos so the first velocity sample is accurate
     lastPos.current = { x: e.clientX, y: e.clientY };
     velocity.current = { x: 0, y: 0 };
@@ -202,7 +204,10 @@ export default function Artboard() {
     const step = () => {
       vx *= FRICTION;
       vy *= FRICTION;
-      if (Math.abs(vx) < MIN_V && Math.abs(vy) < MIN_V) return;
+      if (Math.abs(vx) < MIN_V && Math.abs(vy) < MIN_V) {
+        setIsMoving(false);
+        return;
+      }
       pan.current.x += vx;
       pan.current.y += vy;
       applyPan();
@@ -295,9 +300,10 @@ export default function Artboard() {
       <div style={{
           position: 'fixed', inset: 0, zIndex: 50, pointerEvents: 'none',
           background: 'linear-gradient(to bottom, #0a0a0a 0%, transparent 15%, transparent 85%, #0a0a0a 100%)',
-          backdropFilter: 'blur(4px) brightness(1.1)',
+          backdropFilter: isMoving ? 'none' : 'blur(4px) brightness(1.1)',
           maskImage: 'linear-gradient(to bottom, black, transparent 15%, transparent 85%, black)',
-          WebkitMaskImage: 'linear-gradient(to bottom, black, transparent 15%, transparent 85%, black)'
+          WebkitMaskImage: 'linear-gradient(to bottom, black, transparent 15%, transparent 85%, black)',
+          transition: 'backdrop-filter 0.3s ease'
       }} />
 
       {/* ---- Navigation / Header Panel (Moved to Bottom) ---- */}
@@ -306,10 +312,12 @@ export default function Artboard() {
         padding: '24px', zIndex: 100, pointerEvents: 'none',
         display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end',
         background: 'rgba(255, 255, 255, 0.03)',
-        backdropFilter: 'blur(16px)',
+        backdropFilter: isMoving ? 'none' : 'blur(16px)',
         border: '1px solid rgba(255, 255, 255, 0.05)',
         borderRadius: '12px',
         boxShadow: '0 -4px 30px rgba(0, 0, 0, 0.5)',
+        transition: 'backdrop-filter 0.3s ease',
+        willChange: 'transform, backdrop-filter'
       }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '40px', maxWidth: '85%' }}>
           {/* Col 1 */}
@@ -351,9 +359,10 @@ export default function Artboard() {
       {/* ---- Integrated Branding (Moved to Top) ---- */}
       <div style={{
         position: 'fixed', top: 40, left: 24, zIndex: 110, pointerEvents: 'none',
-        fontFamily: "'Anton', sans-serif", fontSize: 'clamp(40px, 8vw, 120px)',
+        fontFamily: "'Anton', sans-serif", fontSize: 'clamp(20px, 4vw, 60px)',
         color: 'rgba(255,255,255,0.8)', textTransform: 'uppercase', lineHeight: 0.8,
-        letterSpacing: '-0.02em'
+        letterSpacing: '-0.02em',
+        willChange: 'transform'
       }}>
         MO MOVAHED
       </div>
