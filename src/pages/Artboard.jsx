@@ -98,12 +98,12 @@ function NavButton({ text }) {
 
 export default function Artboard() {
   const canvasRef = useRef(null);
-  const [time, setTime] = useState(new Date().toLocaleTimeString('en-GB', { hour12: false }));
+  const [time, setTime] = useState(new Date().toLocaleTimeString('en-GB', { timeZone: 'Europe/London', hour12: false }));
 
   // Live Clock
   useEffect(() => {
     const timer = setInterval(() => {
-      setTime(new Date().toLocaleTimeString('en-GB', { hour12: false }));
+      setTime(new Date().toLocaleTimeString('en-GB', { timeZone: 'Europe/London', hour12: false }));
     }, 1000);
     return () => clearInterval(timer);
   }, []);
@@ -309,27 +309,27 @@ export default function Artboard() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '40px', maxWidth: '85%' }}>
           {/* Col 1 */}
           <div style={headerColStyle}>
-            BASED IN ITALY,<br />WORKING GLOBALLY.<br />
-            <span style={{ color: 'rgba(255,255,255,0.4)' }}>{time} CEST</span>
+            BASED IN GLASGOW,<br />WORKING GLOBALLY.<br />
+            <span style={{ color: 'rgba(255,255,255,0.4)' }}>{time} BST</span>
           </div>
           {/* Col 2 */}
           <div style={headerColStyle}>
             (MY.EXPERTISE)<br /><br />
-            ART DIRECTION<br />
-            WEB DESIGN + DEV<br />
-            WEBFLOW<br />
-            DEVELOPMENT
+            PORTRAITS<br />
+            WEDDING<br />
+            RETOUCHING<br />
+            DRONES
           </div>
           {/* Col 3 */}
           <div style={headerColStyle}>
             (SOCIAL.CONTACTS)<br /><br />
-            AWWARDS<br />
+            INSTAGRAM<br />
             LINKEDIN<br />
             CONTACTS
           </div>
           {/* Col 4 */}
           <div style={{ ...headerColStyle, maxWidth: 360, lineHeight: 1.2 }}>
-            DIGITAL EXPERIENCE DESIGNER AND AWWWARDS JUDGE. I CREATE IMMERSIVE WEBSITES DEFINED BY STRONG VISUAL DIRECTION, REFINED MOTION, AND A DISTINCT DESIGN SIGNATURE.
+            MO MOVAHED IS A PHOTOGRAPHER CAPTURING RAW EMOTION AND CINEMATIC MOMENTS. SPECIALIZING IN PORTRAITS, WEDDINGS, AND AERIAL DRONE PHOTOGRAPHY WITH A DISTINCT BRUTALIST AESTHETIC.
           </div>
         </div>
 
