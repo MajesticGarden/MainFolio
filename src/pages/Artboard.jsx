@@ -302,9 +302,14 @@ export default function Artboard() {
 
       {/* ---- Top Navigation / Header Panel ---- */}
       <div style={{
-        position: 'fixed', top: 0, left: 0, width: '100%',
-        padding: '28px 24px', zIndex: 100, pointerEvents: 'none',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'
+        position: 'fixed', top: '16px', left: '16px', right: '16px',
+        padding: '24px', zIndex: 100, pointerEvents: 'none',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+        background: 'rgba(255, 255, 255, 0.03)',
+        backdropFilter: 'blur(16px)',
+        border: '1px solid rgba(255, 255, 255, 0.05)',
+        borderRadius: '12px',
+        boxShadow: '0 4px 30px rgba(0, 0, 0, 0.5)',
       }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '40px', maxWidth: '85%' }}>
           {/* Col 1 */}
