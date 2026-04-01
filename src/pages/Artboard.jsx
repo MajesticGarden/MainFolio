@@ -83,9 +83,9 @@ function NavButton({ text }) {
       background: 'white',
       border: 'none',
       color: 'black',
-      padding: '4px 12px',
+      padding: '5px 15px', // ~20% increase from 4px 12px
       fontFamily: "'Space Mono', monospace",
-      fontSize: '10px',
+      fontSize: '12px', // 20% increase from 10px
       fontWeight: 700,
       cursor: 'pointer',
       letterSpacing: '0.05em',
@@ -338,7 +338,6 @@ export default function Artboard() {
           <div onClick={() => setIsMono(!isMono)} style={{ cursor: 'pointer' }}>
             <NavButton text={isMono ? "COLOR MODE" : "MONO MODE"} />
           </div>
-          <NavButton text="THE ARCHIVE" />
           <NavButton text="THE PROFILE" />
           <div style={{ ...headerColStyle, fontSize: '8px', color: 'rgba(255,255,255,0.3)', marginTop: 8 }}>SCROLL OR DRAG</div>
         </div>
