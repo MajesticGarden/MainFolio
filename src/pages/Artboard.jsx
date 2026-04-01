@@ -336,7 +336,7 @@ export default function Artboard() {
         {/* Top Right Links */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, pointerEvents: 'auto' }}>
           <div onClick={() => setIsMono(!isMono)} style={{ cursor: 'pointer' }}>
-            <NavButton text={isMono ? "COLOR MODE" : "MONO MODE"} />
+            <NavButton text={isMono ? "SEE IN COLOR" : "SEE IN B&W"} />
           </div>
           <NavButton text="THE PROFILE" />
           <div style={{ ...headerColStyle, fontSize: '8px', color: 'rgba(255,255,255,0.3)', marginTop: 8 }}>SCROLL OR DRAG</div>
