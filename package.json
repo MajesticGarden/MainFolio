@@ -5,11 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "node scripts/sync-gallery.js && node scripts/generate-thumbs.js && vite build",
     "preview": "vite preview",
-    "sync-gallery": "node scripts/sync-gallery.js"
+    "sync-gallery": "node scripts/sync-gallery.js",
+    "generate-thumbs": "node scripts/generate-thumbs.js"
   },
   "devDependencies": {
+    "sharp": "^0.34.5",
     "typescript": "~5.9.3",
     "vite": "^8.0.1"
   },

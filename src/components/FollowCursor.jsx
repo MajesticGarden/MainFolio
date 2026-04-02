@@ -1,51 +1,67 @@
 import React, { useEffect, useRef } from 'react';
-import gsap from 'gsap';
 
+// FollowCursor — no GSAP dependency.
+// Uses a single rAF loop with lerp for the trailing circle.
+// The central dot moves pixel-perfectly via direct style mutations.
+// This avoids creating a new gsap.to({}) tween on every mousemove.
 export default function FollowCursor() {
   const dotRef = useRef(null);
   const circleRef = useRef(null);
 
   useEffect(() => {
-    // Quick setters for performance
-    const xDot = gsap.quickSetter(dotRef.current, 'x', 'px');
-    const yDot = gsap.quickSetter(dotRef.current, 'y', 'px');
-    const xCircle = gsap.quickSetter(circleRef.current, 'x', 'px');
-    const yCircle = gsap.quickSetter(circleRef.current, 'y', 'px');
+    const dot = dotRef.current;
+    const circle = circleRef.current;
+    if (!dot || !circle) return;
 
-    const move = (e) => {
-      // Immediate move for the central dot
-      xDot(e.clientX);
-      yDot(e.clientY);
+    let mouseX = 0, mouseY = 0;       // current mouse position
+    let cx = 0, cy = 0;               // circle's lerped position
+    let rafId = null;
 
-      // Trailing move for the outer circle
-      gsap.to({}, {
-        duration: 0.4,
-        onUpdate: () => {
-          xCircle(e.clientX);
-          yCircle(e.clientY);
-        },
-        ease: 'power2.out'
-      });
+    // Lerp factor — higher = faster trailing (0.28 = very snappy)
+    const LERP = 0.28;
+
+    const tick = () => {
+      cx += (mouseX - cx) * LERP;
+      cy += (mouseY - cy) * LERP;
+
+      // Direct transform — no layout, no style.left/top reads
+      dot.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0)`;
+      circle.style.transform = `translate3d(${cx}px, ${cy}px, 0)`;
+
+      rafId = requestAnimationFrame(tick);
+    };
+
+    const onMouseMove = (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
     };
 
     const onPointerDown = () => {
-      gsap.to(dotRef.current, { scale: 0.5, duration: 0.3 });
-      gsap.to(circleRef.current, { scale: 1.5, borderColor: 'rgba(255,255,255,0.8)', duration: 0.3 });
+      dot.style.transition = 'transform 0.2s, scale 0.2s';
+      dot.style.scale = '0.5';
+      circle.style.scale = '1.5';
+      // Slight delay reset
+      setTimeout(() => {
+        dot.style.transition = '';
+        circle.style.transition = '';
+      }, 300);
     };
 
     const onPointerUp = () => {
-      gsap.to(dotRef.current, { scale: 1, duration: 0.3 });
-      gsap.to(circleRef.current, { scale: 1, borderColor: 'rgba(255,255,255,0.3)', duration: 0.3 });
+      dot.style.scale = '1';
+      circle.style.scale = '1';
     };
 
-    window.addEventListener('mousemove', move);
-    window.addEventListener('mousedown', onPointerDown);
-    window.addEventListener('mouseup', onPointerUp);
+    window.addEventListener('mousemove', onMouseMove, { passive: true });
+    window.addEventListener('mousedown', onPointerDown, { passive: true });
+    window.addEventListener('mouseup', onPointerUp, { passive: true });
+    rafId = requestAnimationFrame(tick);
 
     return () => {
-      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mousedown', onPointerDown);
       window.removeEventListener('mouseup', onPointerUp);
+      if (rafId) cancelAnimationFrame(rafId);
     };
   }, []);
 
@@ -85,7 +101,7 @@ export default function FollowCursor() {
           willChange: 'transform',
         }}
       />
-      {/* Visual Instruction label (optional, placed below) */}
+      {/* Visual instruction label */}
       <div style={{
         position: 'fixed',
         bottom: 24,

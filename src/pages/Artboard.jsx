@@ -1,73 +1,26 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-// Smooth-drag: all pan writes are scheduled through rAF so we never force
-// a layout recalc mid-gesture (fixs the "jerky" feeling).
 import FollowCursor from '../components/FollowCursor';
 import galleryImages from '../data/gallery.js';
 
-const CELL = 440; // Double the size (440px)
-const COLS = 14;  // grid columns (wider for separation)
-
-// Individual image item component
-// Individual image item component
-// Individual image item component
-function ArtboardItem({ img, isMono }) {
-  return (
-    <div
-      className="artboard-item"
-      style={{
-        width: '100%',
-        height: '550px', // Uniform height
-        marginBottom: '8px', // 1/5th of previous 40px
-        overflow: 'hidden',
-        background: '#111',
-        position: 'relative',
-        boxShadow: 'inset 0 0 40px rgba(0,0,0,0.8)',
-        pointerEvents: 'none',
-        flexShrink: 0
-      }}
-    >
-      <img
-        src={`/gallery/${encodeURIComponent(img.file)}`}
-        alt=""
-        draggable={false}
-        className="gallery-img-parallax"
-        style={{
-          width: '100%',
-          height: '110%', // slightly taller for internal parallax
-          objectFit: 'cover',
-          display: 'block',
-          pointerEvents: 'none',
-          willChange: 'transform',
-          filter: isMono ? 'grayscale(100%) contrast(1.1)' : 'none',
-          transition: 'filter 0.5s ease'
-        }}
-      />
-      {/* Soft Edge Overlay */}
-      <div style={{
-        position: 'absolute',
-        inset: 0,
-        boxShadow: 'inset 0 0 60px 20px #0a0a0a',
-        pointerEvents: 'none',
-      }} />
-    </div>
-  );
-}
-
-const allImages = galleryImages;
-
-// Split images into columns
-const columnData = Array.from({ length: COLS }, (_, colIndex) => {
-  return allImages.filter((_, i) => i % COLS === colIndex);
-});
+// ─── Constants ───────────────────────────────────────────────────────────────
+const CELL    = 440;   // column width (px)
+const COLS    = 14;    // number of visible columns
+const GAP     = 6;     // gap between columns (px)
+const TILE_W  = COLS * (CELL + GAP); // width of one full horizontal tile
 
 const columnMultipliers = [0.85, 1.1, 0.95, 1.05, 0.9, 1.15, 1.0, 0.8, 1.2, 0.9, 1.0, 1.1, 0.95, 1.05];
 
-// Calculate loop boundaries
-const GAP = 6; // 1/5th of previous 30px
-const TILE_W = COLS * (CELL + GAP);
-// For height, we'll approximate based on average image rows or measure
-// But for a generic solution, we'll wrap at a large enough value or measure the column's scrollHeight
+// We render 2 horizontal tiles + 3 vertical sets inside each column.
+// 2 tiles is enough to hide the seam on any viewport (TILE_W ~= 6.3k px).
+const H_SETS = 2;
+const V_SETS = 2; // Reduced from 3 to cut node count by 33% (still seamless)
 
+// Distribute images across columns
+const columnData = Array.from({ length: COLS }, (_, ci) =>
+  galleryImages.filter((_, i) => i % COLS === ci)
+);
+
+// ─── Static styles (defined outside component = zero re-creation per render) ──
 const headerColStyle = {
   fontFamily: "'Space Mono', monospace",
   fontSize: '9px',
@@ -77,30 +30,125 @@ const headerColStyle = {
   textTransform: 'uppercase',
 };
 
-function NavButton({ text }) {
+// ─── ArtboardItem ─────────────────────────────────────────────────────────────
+// Pure, memo-wrapped so it never re-renders unless props change.
+// Images point to /thumbs/ (optimized ≤350 KB JPEG) instead of full /gallery/.
+// ArtboardItem points to /thumbs/ and uses a CSS variable for parallax.
+// It also uses IntersectionObserver to only render the <img> when near the viewport.
+const ArtboardItem = React.memo(function ArtboardItem({ file, isMono }) {
+  const [inView, setInView] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setInView(true);
+        observer.disconnect(); // Once in view, we keep it rendered
+      }
+    }, {
+      rootMargin: '400px', // Start loading 400px before it hits the viewport
+      threshold: 0.01,
+    });
+
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <button style={{
-      background: 'white',
-      border: 'none',
-      color: 'black',
-      padding: '5px 15px', // ~20% increase from 4px 12px
-      fontFamily: "'Space Mono', monospace",
-      fontSize: '12px', // 20% increase from 10px
-      fontWeight: 700,
-      cursor: 'pointer',
-      letterSpacing: '0.05em',
-      textTransform: 'uppercase',
-    }}>
+    <div
+      ref={ref}
+      style={{
+        width: '100%',
+        height: '550px',
+        marginBottom: '8px',
+        overflow: 'hidden',
+        background: '#0d0d0d', // Slightly darker placeholder
+        position: 'relative',
+        boxShadow: 'inset 0 0 40px rgba(0,0,0,0.8)',
+        pointerEvents: 'none',
+        flexShrink: 0,
+        contain: 'strict', // isolated paint/layout context
+      }}
+    >
+      {inView && (
+        <img
+          className="gallery-img-parallax"
+          src={`/thumbs/${encodeURIComponent(file)}`}
+          alt=""
+          draggable={false}
+          loading="lazy"   // double-down on performance
+          decoding="async" // prevent main thread block during decode
+          style={{
+            width: '100%',
+            height: '112%', // extra height for parallax headroom
+            objectFit: 'cover',
+            display: 'block',
+            pointerEvents: 'none',
+            willChange: 'transform',
+            // Use CSS Variable for parallax — 1 update per frame instead of 700!
+            transform: 'translate3d(0, var(--img-parallax, 0px), 0)',
+            filter: isMono ? 'grayscale(100%) contrast(1.1)' : 'none',
+            transition: 'filter 0.5s ease',
+          }}
+        />
+      )}
+      {/* Soft Edge Overlay */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        boxShadow: 'inset 0 0 60px 20px #0a0a0a',
+        pointerEvents: 'none',
+      }} />
+    </div>
+  );
+});
+
+// ─── NavButton ────────────────────────────────────────────────────────────────
+function NavButton({ text, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        background: 'white',
+        border: 'none',
+        color: 'black',
+        padding: '5px 15px',
+        fontFamily: "'Space Mono', monospace",
+        fontSize: '12px',
+        fontWeight: 700,
+        cursor: 'pointer',
+        letterSpacing: '0.05em',
+        textTransform: 'uppercase',
+      }}
+    >
       {text}
     </button>
   );
 }
 
+// ─── Main Component ───────────────────────────────────────────────────────────
 export default function Artboard() {
-  const canvasRef = useRef(null);
-  const [time, setTime] = useState(new Date().toLocaleTimeString('en-GB', { timeZone: 'Europe/London', hour12: false }));
+  const canvasRef   = useRef(null);
+  const colRefs     = useRef([]);   // direct refs to each .parallax-column node
+  const imgRefs     = useRef([]);   // flat list of all .gallery-img-parallax nodes
+  const colHeights  = useRef([]);   // cached scrollHeight / V_SETS per column
+  const heightsReady = useRef(false);
 
-  // Live Clock
+  const pan         = useRef({ x: -CELL * 2, y: -CELL * 1 });
+  const dragging    = useRef(false);
+  const dragStart   = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
+  const rafId       = useRef(null);
+  const velocity    = useRef({ x: 0, y: 0 });
+  const lastPos     = useRef({ x: 0, y: 0 });
+  const momentumRaf = useRef(null);
+
+  const [isMono, setIsMono]   = useState(false);
+  const [isMoving, setIsMoving] = useState(false);
+  const [time, setTime]       = useState(() =>
+    new Date().toLocaleTimeString('en-GB', { timeZone: 'Europe/London', hour12: false })
+  );
+
+  // Live clock — low-frequency, fine as state update
   useEffect(() => {
     const timer = setInterval(() => {
       setTime(new Date().toLocaleTimeString('en-GB', { timeZone: 'Europe/London', hour12: false }));
@@ -108,96 +156,79 @@ export default function Artboard() {
     return () => clearInterval(timer);
   }, []);
 
-  const [isMono, setIsMono] = useState(false);
-  const [isMoving, setIsMoving] = useState(false);
+  // ── Cache column DOM refs once after mount ──────────────────────────────────
+  // Avoids querySelectorAll on every rAF tick.
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    colRefs.current = Array.from(canvasRef.current.querySelectorAll('.parallax-column'));
+    imgRefs.current = Array.from(canvasRef.current.querySelectorAll('.gallery-img-parallax'));
 
-  // Pan state stored in a ref so pointer events never read stale closures
-  const pan = useRef({ x: -CELL * 2, y: -CELL * 1 });
-  const dragging = useRef(false);
-  const dragStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
-  // rAF handle — we only ever want one pending frame at a time
-  const rafId = useRef(null);
-  // Velocity for momentum scrolling
-  const velocity = useRef({ x: 0, y: 0 });
-  const lastPos = useRef({ x: 0, y: 0 });
-  const momentumRaf = useRef(null);
+    // We need actual scrollHeight — wait one rAF so layout is painted
+    requestAnimationFrame(() => {
+      colHeights.current = colRefs.current.map(col => (col.scrollHeight || 3000) / V_SETS);
+      heightsReady.current = true;
+    });
+  }, []); // runs once — DOM structure never changes
 
+  // ── applyPan — the hot loop ─────────────────────────────────────────────────
+  // Reads only from refs (no state, no DOM queries).
+  // All writes are batched inside one rAF — zero forced-layout.
   const applyPan = useCallback(() => {
-    if (rafId.current !== null) return; 
+    if (rafId.current !== null) return;
     rafId.current = requestAnimationFrame(() => {
       rafId.current = null;
-      if (canvasRef.current) {
-        const columns = canvasRef.current.querySelectorAll('.parallax-column');
-        
-        // Wrap X
-        const wrappedX = ((pan.current.x % TILE_W) + TILE_W) % TILE_W - TILE_W;
 
-        columns.forEach((col, idx) => {
-          const mult = columnMultipliers[idx % columnMultipliers.length];
-          // Each column has 3 vertical sets rendered. One set's height is scrollHeight / 3.
-          const colHeightTotal = col.scrollHeight || 3000;
-          const oneSetH = colHeightTotal / 3;
-          
-          // Wrap Y precisely at one unit height
-          const wrappedY = ((pan.current.y * mult % oneSetH) + oneSetH) % oneSetH - oneSetH;
+      const wrappedX = ((pan.current.x % TILE_W) + TILE_W) % TILE_W - TILE_W;
+      const pY = pan.current.y;
 
-          col.style.transform = `translate3d(${wrappedX}px, ${wrappedY}px, 0)`;
-          
-          // Internal image parallax - wrap the offset to avoid "drifting" out of bounds
-          const imgs = col.querySelectorAll('.gallery-img-parallax');
-          imgs.forEach((img) => {
-            // The image is 110% height (605px) in a 550px container. Wiggle room is 55px.
-            // We wrap the parallax offset within a reasonable range to match the scroll loops.
-            const wiggle = 55;
-            const internalOffset = ((pan.current.y * 0.05 % wiggle) + wiggle) % wiggle - (wiggle / 2);
-            img.style.transform = `translate3d(0, ${internalOffset}px, 0)`;
-          });
-        });
+      const cols = colRefs.current;
+      const heights = colHeights.current;
+
+      for (let idx = 0; idx < cols.length; idx++) {
+        const col = cols[idx];
+        const mult = columnMultipliers[idx % columnMultipliers.length];
+        const oneSetH = heights[idx] || 3000;
+
+        const wrappedY = ((pY * mult % oneSetH) + oneSetH) % oneSetH - oneSetH;
+        col.style.transform = `translate3d(${wrappedX}px, ${wrappedY}px, 0)`;
       }
+
+      // Parallax on images — now 1 update per-frame via CSS variable
+      // instead of iterating over 700 items!
+      const wiggle = 65;
+      const internalOffset = ((pY * 0.045 % wiggle) + wiggle) % wiggle - (wiggle / 2);
+      canvasRef.current.style.setProperty('--img-parallax', `${internalOffset}px`);
     });
   }, []);
 
-  // ---- Pointer drag (works for mouse AND touch) ----
+  // ── Pointer handlers ────────────────────────────────────────────────────────
   const onPointerDown = useCallback((e) => {
-    // Ignore clicks on interactive elements
     if (e.target.closest('button, a')) return;
-    // Cancel any momentum still running
     if (momentumRaf.current) cancelAnimationFrame(momentumRaf.current);
     e.currentTarget.setPointerCapture(e.pointerId);
     dragging.current = true;
     setIsMoving(true);
-    // Seed lastPos so the first velocity sample is accurate
     lastPos.current = { x: e.clientX, y: e.clientY };
     velocity.current = { x: 0, y: 0 };
-    dragStart.current = {
-      x: e.clientX,
-      y: e.clientY,
-      panX: pan.current.x,
-      panY: pan.current.y,
-    };
+    dragStart.current = { x: e.clientX, y: e.clientY, panX: pan.current.x, panY: pan.current.y };
     e.currentTarget.classList.add('is-dragging');
   }, []);
 
   const onPointerMove = useCallback((e) => {
     if (!dragging.current) return;
-    // Track velocity for momentum
     velocity.current.x = e.clientX - lastPos.current.x;
     velocity.current.y = e.clientY - lastPos.current.y;
     lastPos.current = { x: e.clientX, y: e.clientY };
-
-    const dx = e.clientX - dragStart.current.x;
-    const dy = e.clientY - dragStart.current.y;
-    pan.current.x = dragStart.current.panX + dx;
-    pan.current.y = dragStart.current.panY + dy;
+    pan.current.x = dragStart.current.panX + (e.clientX - dragStart.current.x);
+    pan.current.y = dragStart.current.panY + (e.clientY - dragStart.current.y);
     applyPan();
   }, [applyPan]);
 
   const onPointerUp = useCallback((e) => {
     dragging.current = false;
     e.currentTarget.classList.remove('is-dragging');
-    // Kick off momentum scroll
     if (momentumRaf.current) cancelAnimationFrame(momentumRaf.current);
-    let vx = velocity.current.x * 0.8; // dampen slightly
+    let vx = velocity.current.x * 0.8;
     let vy = velocity.current.y * 0.8;
     const FRICTION = 0.92;
     const MIN_V = 0.3;
@@ -216,7 +247,7 @@ export default function Artboard() {
     momentumRaf.current = requestAnimationFrame(step);
   }, [applyPan]);
 
-  // ---- Trackpad / mouse wheel ----
+  // ── Wheel handler — passive-false so preventDefault works ──────────────────
   const onWheel = useCallback((e) => {
     e.preventDefault();
     pan.current.x -= e.deltaX;
@@ -224,7 +255,6 @@ export default function Artboard() {
     applyPan();
   }, [applyPan]);
 
-  // Attach wheel with { passive: false } so preventDefault works
   useEffect(() => {
     const el = document.getElementById('artboard-root');
     if (!el) return;
@@ -232,12 +262,10 @@ export default function Artboard() {
     return () => el.removeEventListener('wheel', onWheel);
   }, [onWheel]);
 
-  // Set initial position
-  useEffect(() => {
-    applyPan();
-  }, [applyPan]);
+  // Initial position
+  useEffect(() => { applyPan(); }, [applyPan]);
 
-
+  // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <div
       id="artboard-root"
@@ -258,35 +286,39 @@ export default function Artboard() {
     >
       <FollowCursor />
 
-      {/* ---- Multi-Column Draggable Canvas (Looping) ---- */}
+      {/* ── Draggable Canvas ─────────────────────────────────────────────── */}
       <div
         ref={canvasRef}
         style={{
           position: 'absolute', top: 0, left: 0,
-          display: 'flex', gap: `${GAP}px`, 
-          padding: '0' // removed padding to make modulo calculation simpler
+          display: 'flex', gap: `${GAP}px`,
         }}
       >
-        {/* We render 3 horizontal sets to cover looping edges seamlessly */}
-        {[0, 1, 2].map((setIdx) => (
-          <React.Fragment key={setIdx}>
+        {/* H_SETS horizontal tiles for seamless horizontal loop */}
+        {Array.from({ length: H_SETS }, (_, hSet) => (
+          <React.Fragment key={hSet}>
             {columnData.map((colItems, colIdx) => (
-              <div 
-                key={`${setIdx}-${colIdx}`} 
+              <div
+                key={`${hSet}-${colIdx}`}
                 className="parallax-column"
-                style={{ 
+                style={{
                   width: `${CELL}px`,
                   display: 'flex',
                   flexDirection: 'column',
                   willChange: 'transform',
-                  flexShrink: 0
+                  flexShrink: 0,
+                  contain: 'layout style', // isolate paint
                 }}
               >
-                {/* Render 3 vertical sets for seamless looping coverage */}
-                {[0, 1, 2].map(vSet => (
+                {/* V_SETS vertical copies for seamless vertical loop */}
+                {Array.from({ length: V_SETS }, (_, vSet) => (
                   <div key={vSet} style={{ display: 'flex', flexDirection: 'column' }}>
                     {colItems.map((img, i) => (
-                      <ArtboardItem key={`${vSet}-${i}`} img={img} isMono={isMono} />
+                      <ArtboardItem
+                        key={`${vSet}-${i}`}
+                        file={img.file}
+                        isMono={isMono}
+                      />
                     ))}
                   </div>
                 ))}
@@ -296,28 +328,26 @@ export default function Artboard() {
         ))}
       </div>
 
-      {/* ---- Cinematic Vertical Vignette (Blur Fade) ---- */}
+      {/* ── Vertical Vignette ─────────────────────────────────────────────── */}
+      {/* No backdropFilter here — pure gradient, zero GPU stacking cost */}
       <div style={{
-          position: 'fixed', inset: 0, zIndex: 50, pointerEvents: 'none',
-          background: 'linear-gradient(to bottom, #0a0a0a 0%, transparent 15%, transparent 85%, #0a0a0a 100%)',
-          backdropFilter: isMoving ? 'none' : 'blur(4px) brightness(1.1)',
-          maskImage: 'linear-gradient(to bottom, black, transparent 15%, transparent 85%, black)',
-          WebkitMaskImage: 'linear-gradient(to bottom, black, transparent 15%, transparent 85%, black)',
-          transition: 'backdrop-filter 0.3s ease'
+        position: 'fixed', inset: 0, zIndex: 50, pointerEvents: 'none',
+        background: 'linear-gradient(to bottom, #0a0a0a 0%, transparent 12%, transparent 88%, #0a0a0a 100%)',
       }} />
 
-      {/* ---- Navigation / Header Panel (Moved to Bottom) ---- */}
+      {/* ── Header / Nav Panel ────────────────────────────────────────────── */}
+      {/* backdropFilter only on a small static panel — not toggled, not the full viewport */}
       <div style={{
         position: 'fixed', bottom: '16px', left: '16px', right: '16px',
         padding: '24px', zIndex: 100, pointerEvents: 'none',
         display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end',
-        background: 'rgba(255, 255, 255, 0.03)',
-        backdropFilter: isMoving ? 'none' : 'blur(16px)',
+        background: isMoving ? 'rgba(10,10,10,0.92)' : 'rgba(10,10,10,0.75)',
+        backdropFilter: isMoving ? 'none' : 'blur(16px) saturate(1.2)',
+        WebkitBackdropFilter: isMoving ? 'none' : 'blur(16px) saturate(1.2)',
         border: '1px solid rgba(255, 255, 255, 0.05)',
         borderRadius: '12px',
         boxShadow: '0 -4px 30px rgba(0, 0, 0, 0.5)',
-        transition: 'backdrop-filter 0.3s ease',
-        willChange: 'transform, backdrop-filter'
+        transition: 'background 0.3s ease, backdrop-filter 0.3s ease',
       }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '40px', maxWidth: '85%' }}>
           {/* Col 1 */}
@@ -346,28 +376,29 @@ export default function Artboard() {
           </div>
         </div>
 
-        {/* Top Right Links */}
+        {/* Right: Action Buttons */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, pointerEvents: 'auto' }}>
-          <div onClick={() => setIsMono(!isMono)} style={{ cursor: 'pointer' }}>
-            <NavButton text={isMono ? "SEE IN COLOR" : "SEE IN B&W"} />
-          </div>
+          <NavButton text={isMono ? 'SEE IN COLOR' : 'SEE IN B&W'} onClick={() => setIsMono(m => !m)} />
           <NavButton text="THE PROFILE" />
-          <div style={{ ...headerColStyle, fontSize: '8px', color: 'rgba(255,255,255,0.3)', marginTop: 8 }}>SCROLL OR DRAG</div>
+          <div style={{ ...headerColStyle, fontSize: '8px', color: 'rgba(255,255,255,0.3)', marginTop: 8 }}>
+            SCROLL OR DRAG
+          </div>
         </div>
       </div>
 
-      {/* ---- Integrated Branding (Moved to Top) ---- */}
+      {/* ── Branding ─────────────────────────────────────────────────────── */}
       <div style={{
         position: 'fixed', top: 40, left: 24, zIndex: 110, pointerEvents: 'none',
-        fontFamily: "'Anton', sans-serif", fontSize: 'clamp(20px, 4vw, 60px)',
-        color: 'rgba(255,255,255,0.8)', textTransform: 'uppercase', lineHeight: 0.8,
+        fontFamily: "'Anton', sans-serif",
+        fontSize: 'clamp(20px, 4vw, 60px)',
+        color: 'rgba(255,255,255,0.8)',
+        textTransform: 'uppercase',
+        lineHeight: 0.8,
         letterSpacing: '-0.02em',
-        willChange: 'transform'
+        willChange: 'transform',
       }}>
         MO MOVAHED
       </div>
-
-
     </div>
   );
 }
