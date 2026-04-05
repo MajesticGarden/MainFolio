@@ -1,7 +1,9 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
+import { useSpring, animated } from '@react-spring/web';
 import FollowCursor from '../components/FollowCursor';
 import galleryImages from '../data/gallery.js';
 import Footer from '../components/Footer';
+import GrainOverlay from '../components/GrainOverlay';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const CELL    = 440;   // column width (px)
@@ -28,18 +30,37 @@ const columnData = Array.from({ length: COLS }, (_, ci) =>
 // Images point to /thumbs/ (optimized ≤350 KB JPEG) instead of full /gallery/.
 // ArtboardItem points to /thumbs/ and uses a CSS variable for parallax.
 // It also uses IntersectionObserver to only render the <img> when near the viewport.
-const ArtboardItem = React.memo(function ArtboardItem({ file, isMono }) {
+const ArtboardItem = React.memo(function ArtboardItem({ file, isMono, index }) {
   const [inView, setInView] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const ref = useRef(null);
+
+  const { scale } = useSpring({
+    scale: hovered ? 1.05 : 1,
+    config: { mass: 1, tension: 120, friction: 14 }
+  });
+
+  const exif = useMemo(() => {
+    const isos = [100, 400, 800, 1600, 3200];
+    const shutters = ['1/125', '1/250', '1/500', '1/1000'];
+    const lenses = ['35MM', '50MM', '85MM'];
+    const aperture = ['f/1.8', 'f/2.8', 'f/4.0', 'f/5.6'];
+    return {
+      iso: isos[index % isos.length],
+      shutter: shutters[index % shutters.length],
+      lens: lenses[index % lenses.length],
+      aperture: aperture[index % aperture.length]
+    };
+  }, [index]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {
         setInView(true);
-        observer.disconnect(); // Once in view, we keep it rendered
+        observer.disconnect();
       }
     }, {
-      rootMargin: '400px', // Start loading 400px before it hits the viewport
+      rootMargin: '400px',
       threshold: 0.01,
     });
 
@@ -50,40 +71,69 @@ const ArtboardItem = React.memo(function ArtboardItem({ file, isMono }) {
   return (
     <div
       ref={ref}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
         width: '100%',
         height: '550px',
         marginBottom: '8px',
         overflow: 'hidden',
-        background: '#0d0d0d', // Slightly darker placeholder
+        background: '#0d0d0d',
         position: 'relative',
-        boxShadow: 'inset 0 0 40px rgba(0,0,0,0.8)',
-        pointerEvents: 'none',
+        boxShadow: hovered ? '0 10px 40px rgba(0,0,0,0.8)' : 'inset 0 0 40px rgba(0,0,0,0.8)',
+        pointerEvents: 'auto',
         flexShrink: 0,
-        contain: 'strict', // isolated paint/layout context
+        contain: 'strict',
+        transition: 'box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
       }}
     >
       {inView && (
-        <img
-          className="gallery-img-parallax"
-          src={`/thumbs/${encodeURIComponent(file)}`}
-          alt=""
-          draggable={false}
-          loading="lazy"   // double-down on performance
-          decoding="async" // prevent main thread block during decode
-          style={{
-            width: '100%',
-            height: '112%', // extra height for parallax headroom
-            objectFit: 'cover',
-            display: 'block',
-            pointerEvents: 'none',
-            willChange: 'transform',
-            // Use CSS Variable for parallax — 1 update per frame instead of 700!
-            transform: 'translate3d(0, var(--img-parallax, 0px), 0)',
-            filter: isMono ? 'grayscale(100%) contrast(1.1)' : 'none',
-            transition: 'filter 0.5s ease',
-          }}
-        />
+        <>
+          <animated.img
+            className="gallery-img-parallax"
+            src={`/thumbs/${encodeURIComponent(file)}`}
+            alt=""
+            draggable={false}
+            loading="lazy"
+            decoding="async"
+            style={{
+              width: '100%',
+              height: '112%',
+              objectFit: 'cover',
+              display: 'block',
+              pointerEvents: 'none',
+              willChange: 'transform',
+              filter: isMono ? 'grayscale(100%) contrast(1.1)' : 'none',
+              transition: 'filter 0.5s ease',
+              transform: hovered 
+                ? 'translate3d(0, var(--img-parallax, 0px), 0) scale(1.05) rotate3d(1, 1, 0, 5deg)' 
+                : 'translate3d(0, var(--img-parallax, 0px), 0) scale(1) rotate3d(0, 0, 0, 0deg)',
+            }}
+          />
+
+          {/* ── EXIF HUD ── */}
+          <div style={{
+            position: 'absolute', bottom: '16px', left: '16px', right: '16px',
+            zIndex: 30, pointerEvents: 'none',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            padding: '10px 14px', 
+            opacity: hovered ? 1 : 0, 
+            transform: hovered ? 'translateY(0)' : 'translateY(10px)',
+            background: 'rgba(10,10,10,0.45)', backdropFilter: 'blur(16px)',
+            borderRadius: '2px', border: '1px solid rgba(255,255,255,0.08)',
+            textTransform: 'uppercase', fontFamily: "'Space Mono', monospace", fontSize: '9px',
+            color: 'rgba(255,255,255,0.85)', letterSpacing: '0.15em',
+            transition: 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+          }}>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <span>ISO.{exif.iso}</span>
+              <span style={{ opacity: 0.3 }}>|</span>
+              <span>{exif.aperture}</span>
+            </div>
+            <div>{exif.shutter}</div>
+            <div style={{ opacity: 0.5 }}>{exif.lens}.OPTIC</div>
+          </div>
+        </>
       )}
       {/* Soft Edge Overlay */}
       <div style={{
@@ -91,6 +141,7 @@ const ArtboardItem = React.memo(function ArtboardItem({ file, isMono }) {
         inset: 0,
         boxShadow: 'inset 0 0 60px 20px #0a0a0a',
         pointerEvents: 'none',
+        zIndex: 20,
       }} />
     </div>
   );
@@ -256,6 +307,7 @@ export default function Artboard() {
       }}
     >
       <FollowCursor />
+      <GrainOverlay />
 
       {/* ── Draggable Canvas ─────────────────────────────────────────────── */}
       <div
@@ -287,6 +339,7 @@ export default function Artboard() {
                     {colItems.map((img, i) => (
                       <ArtboardItem
                         key={`${vSet}-${i}`}
+                        index={i}
                         file={img.file}
                         isMono={isMono}
                       />
