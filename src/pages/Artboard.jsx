@@ -105,20 +105,26 @@ const ArtboardItem = React.memo(function ArtboardItem({ file, isMono }) {
 
 // ─── NavButton ────────────────────────────────────────────────────────────────
 function NavButton({ text, onClick }) {
+  const [hover, setHover] = useState(false);
   return (
     <button
       onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
       style={{
-        background: 'white',
-        border: 'none',
-        color: 'black',
-        padding: '5px 15px',
+        background: hover ? '#0a0a0a' : 'white',
+        border: '1px solid white',
+        color: hover ? 'white' : 'black',
+        padding: '12px 28px',
         fontFamily: "'Space Mono', monospace",
-        fontSize: '12px',
+        fontSize: '14px',
         fontWeight: 700,
         cursor: 'pointer',
-        letterSpacing: '0.05em',
+        letterSpacing: '0.12em',
         textTransform: 'uppercase',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        boxShadow: hover ? '0 0 25px rgba(255,255,255,0.4)' : '0 4px 15px rgba(0,0,0,0.3)',
+        transform: hover ? 'translateY(-2px)' : 'translateY(0)',
       }}
     >
       {text}
@@ -349,7 +355,7 @@ export default function Artboard() {
         boxShadow: '0 -4px 30px rgba(0, 0, 0, 0.5)',
         transition: 'background 0.3s ease, backdrop-filter 0.3s ease',
       }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '40px', maxWidth: '85%' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '60px', maxWidth: '85%' }}>
           {/* Col 1 */}
           <div style={headerColStyle}>
             BASED IN GLASGOW,<br />WORKING GLOBALLY.<br />
@@ -363,13 +369,6 @@ export default function Artboard() {
             RETOUCHING<br />
             DRONES
           </div>
-          {/* Col 3 */}
-          <div style={headerColStyle}>
-            (SOCIAL.CONTACTS)<br /><br />
-            INSTAGRAM<br />
-            LINKEDIN<br />
-            CONTACTS
-          </div>
           {/* Col 4 */}
           <div style={{ ...headerColStyle, maxWidth: 360, lineHeight: 1.2 }}>
             MO MOVAHED IS A PHOTOGRAPHER CAPTURING RAW EMOTION AND CINEMATIC MOMENTS. SPECIALIZING IN PORTRAITS, WEDDINGS, AND AERIAL DRONE PHOTOGRAPHY WITH A DISTINCT BRUTALIST AESTHETIC.
@@ -379,7 +378,6 @@ export default function Artboard() {
         {/* Right: Action Buttons */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, pointerEvents: 'auto' }}>
           <NavButton text={isMono ? 'SEE IN COLOR' : 'SEE IN B&W'} onClick={() => setIsMono(m => !m)} />
-          <NavButton text="THE PROFILE" />
           <div style={{ ...headerColStyle, fontSize: '8px', color: 'rgba(255,255,255,0.3)', marginTop: 8 }}>
             SCROLL OR DRAG
           </div>
