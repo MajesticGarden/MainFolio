@@ -87,6 +87,25 @@ body::after {
 #artboard-root {
   cursor: none;
 }
-#artboard-root.is-dragging {
-  cursor: none;
+/* ======= Brand Glitch ======= */
+.brand-glitch {
+  display: inline-block;
+  transition: all 0.3s ease;
+  cursor: default;
+}
+.brand-glitch:hover {
+  text-shadow: 
+    2px 0 #ff00c1, 
+    -2px 0 #00fff9;
+  animation: glitch 0.3s infinite;
+  opacity: 1 !important;
+}
+
+@keyframes glitch {
+  0% { transform: translate(0); }
+  20% { transform: translate(-2px, 1px); }
+  40% { transform: translate(-2px, -1px); }
+  60% { transform: translate(2px, 1px); }
+  80% { transform: translate(2px, -1px); }
+  100% { transform: translate(0); }
 }

@@ -101,21 +101,6 @@ export default function FollowCursor() {
           willChange: 'transform',
         }}
       />
-      {/* Visual instruction label */}
-      <div style={{
-        position: 'fixed',
-        bottom: 24,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        fontFamily: "'Space Mono', monospace",
-        fontSize: '9px',
-        color: 'rgba(255,255,255,0.2)',
-        letterSpacing: '0.2em',
-        pointerEvents: 'none',
-        textTransform: 'uppercase',
-      }}>
-        DRAG TO EXPLORE — SCROLL TO PAN
-      </div>
     </>
   );
 }

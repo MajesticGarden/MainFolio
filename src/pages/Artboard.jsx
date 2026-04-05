@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import FollowCursor from '../components/FollowCursor';
 import galleryImages from '../data/gallery.js';
+import Footer from '../components/Footer';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const CELL    = 440;   // column width (px)
@@ -21,14 +22,6 @@ const columnData = Array.from({ length: COLS }, (_, ci) =>
 );
 
 // ─── Static styles (defined outside component = zero re-creation per render) ──
-const headerColStyle = {
-  fontFamily: "'Space Mono', monospace",
-  fontSize: '9px',
-  letterSpacing: '0.08em',
-  color: 'rgba(255,255,255,0.7)',
-  lineHeight: 1.4,
-  textTransform: 'uppercase',
-};
 
 // ─── ArtboardItem ─────────────────────────────────────────────────────────────
 // Pure, memo-wrapped so it never re-renders unless props change.
@@ -103,34 +96,6 @@ const ArtboardItem = React.memo(function ArtboardItem({ file, isMono }) {
   );
 });
 
-// ─── NavButton ────────────────────────────────────────────────────────────────
-function NavButton({ text, onClick }) {
-  const [hover, setHover] = useState(false);
-  return (
-    <button
-      onClick={onClick}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      style={{
-        background: hover ? '#0a0a0a' : 'white',
-        border: '1px solid white',
-        color: hover ? 'white' : 'black',
-        padding: '12px 28px',
-        fontFamily: "'Space Mono', monospace",
-        fontSize: '14px',
-        fontWeight: 700,
-        cursor: 'pointer',
-        letterSpacing: '0.12em',
-        textTransform: 'uppercase',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        boxShadow: hover ? '0 0 25px rgba(255,255,255,0.4)' : '0 4px 15px rgba(0,0,0,0.3)',
-        transform: hover ? 'translateY(-2px)' : 'translateY(0)',
-      }}
-    >
-      {text}
-    </button>
-  );
-}
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function Artboard() {
@@ -341,60 +306,21 @@ export default function Artboard() {
         background: 'linear-gradient(to bottom, #0a0a0a 0%, transparent 12%, transparent 88%, #0a0a0a 100%)',
       }} />
 
-      {/* ── Header / Nav Panel ────────────────────────────────────────────── */}
-      {/* backdropFilter only on a small static panel — not toggled, not the full viewport */}
-      <div style={{
-        position: 'fixed', bottom: '16px', left: '16px', right: '16px',
-        padding: '24px', zIndex: 100, pointerEvents: 'none',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end',
-        background: isMoving ? 'rgba(10,10,10,0.92)' : 'rgba(10,10,10,0.75)',
-        backdropFilter: isMoving ? 'none' : 'blur(16px) saturate(1.2)',
-        WebkitBackdropFilter: isMoving ? 'none' : 'blur(16px) saturate(1.2)',
-        border: '1px solid rgba(255, 255, 255, 0.05)',
-        borderRadius: '12px',
-        boxShadow: '0 -4px 30px rgba(0, 0, 0, 0.5)',
-        transition: 'background 0.3s ease, backdrop-filter 0.3s ease',
-      }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '60px', maxWidth: '85%' }}>
-          {/* Col 1 */}
-          <div style={headerColStyle}>
-            BASED IN GLASGOW,<br />WORKING GLOBALLY.<br />
-            <span style={{ color: 'rgba(255,255,255,0.4)' }}>{time} BST</span>
-          </div>
-          {/* Col 2 */}
-          <div style={headerColStyle}>
-            (MY.EXPERTISE)<br /><br />
-            PORTRAITS<br />
-            WEDDING<br />
-            RETOUCHING<br />
-            DRONES
-          </div>
-          {/* Col 4 */}
-          <div style={{ ...headerColStyle, maxWidth: 360, lineHeight: 1.2 }}>
-            MO MOVAHED IS A PHOTOGRAPHER CAPTURING RAW EMOTION AND CINEMATIC MOMENTS. SPECIALIZING IN PORTRAITS, WEDDINGS, AND AERIAL DRONE PHOTOGRAPHY WITH A DISTINCT BRUTALIST AESTHETIC.
-          </div>
-        </div>
-
-        {/* Right: Action Buttons */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, pointerEvents: 'auto' }}>
-          <NavButton text={isMono ? 'SEE IN COLOR' : 'SEE IN B&W'} onClick={() => setIsMono(m => !m)} />
-          <div style={{ ...headerColStyle, fontSize: '8px', color: 'rgba(255,255,255,0.3)', marginTop: 8 }}>
-            SCROLL OR DRAG
-          </div>
-        </div>
-      </div>
+      <Footer isMono={isMono} setIsMono={setIsMono} time={time} isMoving={isMoving} />
 
       {/* ── Branding ─────────────────────────────────────────────────────── */}
-      <div style={{
-        position: 'fixed', top: 40, left: 24, zIndex: 110, pointerEvents: 'none',
-        fontFamily: "'Anton', sans-serif",
-        fontSize: 'clamp(20px, 4vw, 60px)',
-        color: 'rgba(255,255,255,0.8)',
-        textTransform: 'uppercase',
-        lineHeight: 0.8,
-        letterSpacing: '-0.02em',
-        willChange: 'transform',
-      }}>
+      <div 
+        className="brand-glitch"
+        style={{
+          position: 'fixed', top: 40, left: 24, zIndex: 110, pointerEvents: 'auto',
+          fontFamily: "'Anton', sans-serif",
+          fontSize: 'clamp(20px, 4vw, 60px)',
+          color: 'rgba(255,255,255,0.8)',
+          textTransform: 'uppercase',
+          lineHeight: 0.8,
+          letterSpacing: '-0.02em',
+          willChange: 'transform',
+        }}>
         MO MOVAHED
       </div>
     </div>

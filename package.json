@@ -8,7 +8,8 @@
     "build": "node scripts/sync-gallery.js && node scripts/generate-thumbs.js && vite build",
     "preview": "vite preview",
     "sync-gallery": "node scripts/sync-gallery.js",
-    "generate-thumbs": "node scripts/generate-thumbs.js"
+    "generate-thumbs": "node scripts/generate-thumbs.js",
+    "clean-thumbs": "rm -rf public/thumbs"
   },
   "devDependencies": {
     "sharp": "^0.34.5",

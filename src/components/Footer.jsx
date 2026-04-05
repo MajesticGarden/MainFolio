@@ -1,0 +1,90 @@
+import React, { useState } from 'react';
+
+const headerColStyle = {
+  fontFamily: "'Space Mono', monospace",
+  fontSize: '13px', // ~25% increase from 10px
+  letterSpacing: '0.08em',
+  color: 'rgba(255,255,255,0.7)',
+  lineHeight: 1.4,
+  textTransform: 'uppercase',
+};
+
+function NavButton({ text, onClick }) {
+  const [hover, setHover] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        background: hover ? '#0a0a0a' : 'white',
+        border: '1px solid white',
+        color: hover ? 'white' : 'black',
+        padding: '15px 40px', // ~25% increase from 12px 32px
+        fontFamily: "'Space Mono', monospace",
+        fontSize: '18px', // ~25% increase from 14px
+        fontWeight: 700,
+        cursor: 'pointer',
+        letterSpacing: '0.15em',
+        textTransform: 'uppercase',
+        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+        boxShadow: hover ? '0 0 35px rgba(255,255,255,0.5)' : '0 8px 30px rgba(0,0,0,0.5)',
+        transform: hover ? 'translateY(-4px) scale(1.02)' : 'translateY(0) scale(1)',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {text}
+    </button>
+  );
+}
+
+export default function Footer({ isMono, setIsMono, time, isMoving }) {
+  return (
+    <>
+      {/* Left Pod: Info & Branding */}
+      <div style={{
+        position: 'fixed', bottom: '24px', left: '24px',
+        padding: '30px 40px', // ~25% increase from 24px 32px
+        zIndex: 100, pointerEvents: 'auto',
+        background: isMoving ? 'rgba(10,10,10,0.95)' : 'rgba(10,10,10,0.65)',
+        backdropFilter: isMoving ? 'none' : 'blur(24px) saturate(1.8)',
+        WebkitBackdropFilter: isMoving ? 'none' : 'blur(24px) saturate(1.8)',
+        border: '1px solid rgba(255, 255, 255, 0.12)',
+        borderRadius: '20px', // ~25% increase from 16px
+        display: 'flex', gap: '60px', // ~25% increase from 48px
+        boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
+        transition: 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+      }}>
+        <div style={headerColStyle}>
+          <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '10px', letterSpacing: '0.3em' }}>(GLASGOW/UK)</span><br />
+          BASED LOCALLY,<br />WORKING GLOBALLY.<br />
+          <span style={{ color: 'white' }}>{time} BST</span>
+        </div>
+        <div style={{ ...headerColStyle, borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '60px' }}>
+          <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '10px', letterSpacing: '0.3em' }}>(MY.EXPERTISE)</span><br />
+          PORTRAITS / WEDDINGS<br />
+          RETOUCHING / DRONES
+        </div>
+      </div>
+
+      {/* Right Pod: Action Toggle & HUD */}
+      <div style={{
+        position: 'fixed', bottom: '24px', right: '24px',
+        zIndex: 100, pointerEvents: 'auto',
+        display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 20
+      }}>
+        <NavButton text={isMono ? 'COLOR' : 'B&W'} onClick={() => setIsMono(m => !m)} />
+        <div style={{ 
+          ...headerColStyle, 
+          fontSize: '16px', // 100% bigger from 8px
+          color: 'rgba(255,255,255,0.3)', 
+          letterSpacing: '0.25em',
+          transition: 'all 0.5s ease',
+          opacity: isMoving ? 0.1 : 0.6 // Reduced from 1 for HUD feel
+        }}>
+          SCROLL OR DRAG TO EXPLORE
+        </div>
+      </div>
+    </>
+  );
+}
