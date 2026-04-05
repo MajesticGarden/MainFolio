@@ -65,6 +65,23 @@ export default function Footer({ isMono, setIsMono, time, isMoving }) {
           PORTRAITS / WEDDINGS<br />
           RETOUCHING / DRONES
         </div>
+        <div style={{ ...headerColStyle, borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '60px' }}>
+          <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '10px', letterSpacing: '0.3em' }}>(CONNECT)</span><br />
+          GET IN TOUCH<br />
+          <a 
+            href="mailto:hello@momovahed.com" 
+            style={{ 
+              color: 'white', 
+              textDecoration: 'none', 
+              transition: 'all 0.3s',
+              borderBottom: '1px solid transparent'
+            }}
+            onMouseEnter={e => e.target.style.borderBottom = '1px solid white'}
+            onMouseLeave={e => e.target.style.borderBottom = '1px solid transparent'}
+          >
+            HELLO@MOMOVAHED.COM
+          </a>
+        </div>
       </div>
 
       {/* Right Pod: Action Toggle & HUD */}
