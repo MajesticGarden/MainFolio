@@ -353,10 +353,9 @@ export default function Artboard() {
       </div>
 
       {/* ── Vertical Vignette ─────────────────────────────────────────────── */}
-      {/* No backdropFilter here — pure gradient, zero GPU stacking cost */}
       <div style={{
         position: 'fixed', inset: 0, zIndex: 50, pointerEvents: 'none',
-        background: 'linear-gradient(to bottom, #0a0a0a 0%, transparent 12%, transparent 88%, #0a0a0a 100%)',
+        background: 'linear-gradient(to bottom, #0a0a0a 0%, transparent 8%, transparent 92%, #0a0a0a 100%)',
       }} />
 
       <Footer isMono={isMono} setIsMono={setIsMono} time={time} isMoving={isMoving} />
@@ -366,8 +365,9 @@ export default function Artboard() {
         className="brand-glitch"
         style={{
           position: 'fixed', top: 40, left: 24, zIndex: 110, pointerEvents: 'auto',
-          fontFamily: "'Anton', sans-serif",
+          fontFamily: "'Syne', sans-serif",
           fontSize: 'clamp(20px, 4vw, 60px)',
+          fontWeight: 800,
           color: 'rgba(255,255,255,0.8)',
           textTransform: 'uppercase',
           lineHeight: 0.8,
