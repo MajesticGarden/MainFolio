@@ -109,3 +109,30 @@ body::after {
   80% { transform: translate(2px, -1px); }
   100% { transform: translate(0); }
 }
+
+/* ======= Portfolio Link Button ======= */
+.portfolio-link-btn {
+  display: inline-block;
+  text-decoration: none;
+  background: white;
+  border: 1px solid white;
+  color: black;
+  padding: 12px 32px;
+  font-family: 'Space Mono', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  transform: translateY(0) scale(1);
+  white-space: nowrap;
+}
+
+.portfolio-link-btn:hover {
+  background: #0a0a0a;
+  color: white;
+  box-shadow: 0 0 35px rgba(255, 255, 255, 0.5);
+  transform: translateY(-4px) scale(1.02);
+}

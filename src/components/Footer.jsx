@@ -89,6 +89,7 @@ export default function Footer({ isMono, setIsMono, time, isMoving }) {
         zIndex: 100, pointerEvents: 'auto',
         display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 16
       }}>
+        <a href="https://gallery.momovahed.com" className="portfolio-link-btn">View Medium Format Gallery</a>
         <NavButton text={isMono ? 'COLOR' : 'B&W'} onClick={() => setIsMono(m => !m)} />
         <div style={{ 
           ...headerColStyle, 
