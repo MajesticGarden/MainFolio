@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node scripts/generate-thumbs.js && vite",
     "build": "node scripts/sync-gallery.js && node scripts/generate-thumbs.js && vite build",
     "preview": "vite preview",
     "sync-gallery": "node scripts/sync-gallery.js",
