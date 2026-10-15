@@ -171,22 +171,32 @@ body::after {
 
 /* Mobile & Tablet Adaptations (< 768px) */
 @media (max-width: 768px) {
-  .brand-glitch {
+  nav {
     top: 20px !important;
-    left: 16px !important;
-    font-size: clamp(20px, 6vw, 36px) !important;
+    right: 14px !important;
+    gap: 6px !important;
+  }
+
+  nav button {
+    padding: 7px 11px !important;
+    font-size: 10px !important;
+    letter-spacing: 0.08em !important;
+  }
+
+  .brand-glitch {
+    top: 22px !important;
+    left: 14px !important;
+    font-size: clamp(16px, 4.5vw, 24px) !important;
   }
 
   .footer-pod-left {
-    bottom: auto;
-    top: 68px;
-    left: 16px;
-    right: 16px;
-    padding: 12px 16px;
-    gap: 16px;
-    flex-wrap: wrap;
-    border-radius: 10px;
-    max-width: calc(100vw - 32px);
+    bottom: 16px !important;
+    top: auto !important;
+    left: 14px !important;
+    right: auto !important;
+    padding: 10px 14px !important;
+    max-width: calc(100vw - 90px) !important;
+    gap: 14px !important;
   }
 
   .footer-pod-left > div {
@@ -195,27 +205,7 @@ body::after {
 
   .footer-pod-left > div:not(:first-child) {
     border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
-    padding-left: 14px !important;
-  }
-
-  .footer-pod-right {
-    bottom: 16px;
-    right: 16px;
-    left: 16px;
-    align-items: stretch;
-    gap: 10px;
-  }
-
-  .footer-pod-right .portfolio-link-btn,
-  .footer-pod-right button {
-    width: 100%;
-    text-align: center;
-    padding: 10px 16px !important;
-    font-size: 12px !important;
-  }
-
-  .footer-hud-hint {
-    display: none !important;
+    padding-left: 12px !important;
   }
 }
 

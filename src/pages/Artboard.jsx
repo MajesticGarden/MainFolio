@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react'
 import FollowCursor from '../components/FollowCursor';
 import galleryImages from '../data/gallery.js';
 import Footer from '../components/Footer';
+import HeaderNav from '../components/HeaderNav';
 import GrainOverlay from '../components/GrainOverlay';
 import PhotoLightbox from '../components/PhotoLightbox';
 
@@ -340,12 +341,15 @@ export default function Artboard({ onOpenGallery }) {
         background: 'linear-gradient(to bottom, #0a0a0a 0%, transparent 8%, transparent 92%, #0a0a0a 100%)',
       }} />
 
-      <Footer
+      <HeaderNav
         isMono={isMono}
         setIsMono={setIsMono}
+        onOpenGallery={onOpenGallery}
+      />
+
+      <Footer
         time={time}
         isMoving={isMoving}
-        onOpenGallery={onOpenGallery}
       />
 
       {/* ── Branding ─────────────────────────────────────────────────────── */}

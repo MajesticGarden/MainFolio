@@ -131,6 +131,25 @@ export default function GalleryView({ onBackToCanvas, isMono, setIsMono }) {
           >
             {isMono ? 'COLOR' : 'B&W'}
           </button>
+          <button
+            data-thunderbolt-launcher
+            style={{
+              background: 'rgba(255, 255, 255, 0.08)',
+              border: '1px solid rgba(255, 255, 255, 0.25)',
+              color: '#fff',
+              padding: '6px 16px',
+              fontFamily: "'Space Mono', monospace",
+              fontSize: '11px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              letterSpacing: '0.12em',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            <span>⚡</span> CHAT
+          </button>
         </div>
       </header>
 
