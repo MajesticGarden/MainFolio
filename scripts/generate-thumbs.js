@@ -1,4 +1,3 @@
-import sharp from 'sharp';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -8,10 +7,19 @@ const __dirname = path.dirname(__filename);
 
 const SRC = path.join(__dirname, '../public/gallery');
 const DST = path.join(__dirname, '../public/thumbs');
-const THUMB_WIDTH = 1200; // Increased from 600 for high-DPI (Retina) support
+const THUMB_WIDTH = 1200; // High-DPI (Retina) support
 
 async function generateThumbs() {
   console.log('--- Generating High-Fidelity Thumbnails ---');
+
+  let sharp;
+  try {
+    const sharpModule = await import('sharp');
+    sharp = sharpModule.default || sharpModule;
+  } catch (err) {
+    console.warn('Notice: sharp not installed in this environment. Relying on pre-generated public/thumbs.');
+    return;
+  }
 
   if (!fs.existsSync(DST)) {
     fs.mkdirSync(DST, { recursive: true });

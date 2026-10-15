@@ -202,6 +202,12 @@ export default function GalleryView({ onBackToCanvas, isMono, setIsMono }) {
                 alt=""
                 loading="lazy"
                 decoding="async"
+                onError={(e) => {
+                  if (!e.currentTarget.dataset.retried) {
+                    e.currentTarget.dataset.retried = 'true';
+                    e.currentTarget.src = `/gallery/${encodeURIComponent(img.file)}`;
+                  }
+                }}
                 style={{
                   width: '100%',
                   height: 'auto',

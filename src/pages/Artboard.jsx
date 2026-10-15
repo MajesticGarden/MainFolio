@@ -24,9 +24,8 @@ const columnData = Array.from({ length: COLS }, (_, ci) =>
 
 // ─── ArtboardItem ─────────────────────────────────────────────────────────────
 const ArtboardItem = React.memo(function ArtboardItem({ file, isMono, index }) {
-  const [inView, setInView] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const [hovered, setHovered] = useState(false);
-  const ref = useRef(null);
 
   const exif = useMemo(() => {
     const isos = [100, 400, 800, 1600, 3200];
@@ -41,24 +40,8 @@ const ArtboardItem = React.memo(function ArtboardItem({ file, isMono, index }) {
     };
   }, [index]);
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        setInView(true);
-        observer.disconnect();
-      }
-    }, {
-      rootMargin: '400px',
-      threshold: 0.01,
-    });
-
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-
   return (
     <div
-      ref={ref}
       className="artboard-item"
       data-file={file}
       onMouseEnter={() => setHovered(true)}
@@ -74,58 +57,63 @@ const ArtboardItem = React.memo(function ArtboardItem({ file, isMono, index }) {
         pointerEvents: 'auto',
         cursor: 'pointer',
         flexShrink: 0,
-        contain: 'strict',
+        contain: 'paint layout',
         transition: 'box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
       }}
     >
-      {inView && (
-        <>
-          <img
-            className="gallery-img-parallax"
-            src={`/thumbs/${encodeURIComponent(file)}`}
-            alt=""
-            draggable={false}
-            loading="lazy"
-            decoding="async"
-            style={{
-              width: '100%',
-              height: '112%',
-              objectFit: 'cover',
-              display: 'block',
-              pointerEvents: 'none',
-              willChange: 'transform',
-              filter: isMono ? 'grayscale(100%) contrast(1.1)' : 'none',
-              transition: 'filter 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-              transform: hovered 
-                ? 'translate3d(0, var(--img-parallax, 0px), 0) scale(1.04) rotate3d(1, 1, 0, 3deg)' 
-                : 'translate3d(0, var(--img-parallax, 0px), 0) scale(1) rotate3d(0, 0, 0, 0deg)',
-            }}
-          />
+      <img
+        className="gallery-img-parallax"
+        src={`/thumbs/${encodeURIComponent(file)}`}
+        alt=""
+        draggable={false}
+        decoding="async"
+        onLoad={() => setLoaded(true)}
+        onError={(e) => {
+          if (!e.currentTarget.dataset.retried) {
+            e.currentTarget.dataset.retried = 'true';
+            e.currentTarget.src = `/gallery/${encodeURIComponent(file)}`;
+          }
+        }}
+        style={{
+          width: '100%',
+          height: '112%',
+          objectFit: 'cover',
+          display: 'block',
+          pointerEvents: 'none',
+          willChange: 'transform',
+          opacity: loaded ? 1 : 0,
+          filter: isMono ? 'grayscale(100%) contrast(1.1)' : 'none',
+          transition: 'opacity 0.35s ease, filter 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+          transform: hovered 
+            ? 'translate3d(0, var(--img-parallax, 0px), 0) scale(1.04) rotate3d(1, 1, 0, 3deg)' 
+            : 'translate3d(0, var(--img-parallax, 0px), 0) scale(1) rotate3d(0, 0, 0, 0deg)',
+        }}
+      />
 
-          {/* ── EXIF HUD ── */}
-          <div style={{
-            position: 'absolute', bottom: '16px', left: '16px', right: '16px',
-            zIndex: 30, pointerEvents: 'none',
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            padding: '10px 14px', 
-            opacity: hovered ? 1 : 0, 
-            transform: hovered ? 'translateY(0)' : 'translateY(10px)',
-            background: 'rgba(10,10,10,0.65)', backdropFilter: 'blur(16px)',
-            borderRadius: '2px', border: '1px solid rgba(255,255,255,0.1)',
-            textTransform: 'uppercase', fontFamily: "'Space Mono', monospace", fontSize: '9px',
-            color: 'rgba(255,255,255,0.85)', letterSpacing: '0.15em',
-            transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-          }}>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <span>ISO.{exif.iso}</span>
-              <span style={{ opacity: 0.3 }}>|</span>
-              <span>{exif.aperture}</span>
-            </div>
-            <div>{exif.shutter}</div>
-            <div style={{ opacity: 0.5 }}>{exif.lens}.OPTIC</div>
-          </div>
-        </>
-      )}
+      {/* ── EXIF HUD ── */}
+      <div style={{
+        position: 'absolute', bottom: '16px', left: '16px', right: '16px',
+        zIndex: 30, pointerEvents: 'none',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        padding: '10px 14px', 
+        opacity: hovered ? 1 : 0, 
+        transform: hovered ? 'translateY(0)' : 'translateY(10px)',
+        background: 'rgba(10,10,10,0.65)', backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        borderRadius: '2px', border: '1px solid rgba(255,255,255,0.1)',
+        textTransform: 'uppercase', fontFamily: "'Space Mono', monospace", fontSize: '9px',
+        color: 'rgba(255,255,255,0.85)', letterSpacing: '0.15em',
+        transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+      }}>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <span>ISO.{exif.iso}</span>
+          <span style={{ opacity: 0.3 }}>|</span>
+          <span>{exif.aperture}</span>
+        </div>
+        <div>{exif.shutter}</div>
+        <div style={{ opacity: 0.5 }}>{exif.lens}.OPTIC</div>
+      </div>
+
       {/* Soft Edge Overlay */}
       <div style={{
         position: 'absolute',
@@ -139,7 +127,7 @@ const ArtboardItem = React.memo(function ArtboardItem({ file, isMono, index }) {
 });
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-export default function Artboard({ onOpenGallery }) {
+export default function Artboard({ onOpenGallery, isMono: controlledMono, setIsMono: setControlledMono }) {
   const canvasRef   = useRef(null);
   const colRefs     = useRef([]);
   const colHeights  = useRef([]);
@@ -153,7 +141,10 @@ export default function Artboard({ onOpenGallery }) {
   const momentumRaf = useRef(null);
 
   const [activePhoto, setActivePhoto] = useState(null);
-  const [isMono, setIsMono]   = useState(false);
+  const [internalMono, setInternalMono] = useState(false);
+  const isMono = controlledMono !== undefined ? controlledMono : internalMono;
+  const setIsMono = setControlledMono || setInternalMono;
+
   const [isMoving, setIsMoving] = useState(false);
   const [time, setTime]       = useState(() =>
     new Date().toLocaleTimeString('en-GB', { timeZone: 'Europe/London', hour12: false })
