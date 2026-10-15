@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const SOURCE_DIR = '/Users/mo/Public/Images';
+const SOURCE_DIR = process.env.IMAGES_SOURCE_DIR || '/Users/mo/Public/Images';
 const TARGET_DIR = path.join(__dirname, '../public/gallery');
 const DATA_FILE = path.join(__dirname, '../src/data/gallery.js');
 
@@ -14,41 +14,43 @@ const VALID_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'];
 function syncGallery() {
   console.log('--- Starting Gallery Sync ---');
 
-  if (!fs.existsSync(SOURCE_DIR)) {
-    console.error(`Source directory not found: ${SOURCE_DIR}`);
-    return;
-  }
-
   if (!fs.existsSync(TARGET_DIR)) {
     fs.mkdirSync(TARGET_DIR, { recursive: true });
   }
 
-  const sourceFiles = fs.readdirSync(SOURCE_DIR)
+  if (fs.existsSync(SOURCE_DIR)) {
+    const sourceFiles = fs.readdirSync(SOURCE_DIR)
+      .filter(file => VALID_EXTENSIONS.includes(path.extname(file).toLowerCase()));
+
+    const targetFiles = fs.readdirSync(TARGET_DIR);
+
+    // 1. Remove files in target that are no longer in source
+    targetFiles.forEach(file => {
+      if (!sourceFiles.includes(file)) {
+        console.log(`Removing: ${file}`);
+        fs.unlinkSync(path.join(TARGET_DIR, file));
+      }
+    });
+
+    // 2. Copy files from source to target if they don't exist or are different
+    sourceFiles.forEach(file => {
+      const srcPath = path.join(SOURCE_DIR, file);
+      const destPath = path.join(TARGET_DIR, file);
+
+      if (!fs.existsSync(destPath)) {
+        console.log(`Adding: ${file}`);
+        fs.copyFileSync(srcPath, destPath);
+      }
+    });
+  } else {
+    console.log(`External source directory not found (${SOURCE_DIR}). Syncing from local gallery directory.`);
+  }
+
+  // 3. Regenerate gallery.js from TARGET_DIR
+  const currentImages = fs.readdirSync(TARGET_DIR)
     .filter(file => VALID_EXTENSIONS.includes(path.extname(file).toLowerCase()));
 
-  const targetFiles = fs.readdirSync(TARGET_DIR);
-
-  // 1. Remove files in target that are no longer in source
-  targetFiles.forEach(file => {
-    if (!sourceFiles.includes(file)) {
-      console.log(`Removing: ${file}`);
-      fs.unlinkSync(path.join(TARGET_DIR, file));
-    }
-  });
-
-  // 2. Copy files from source to target if they don't exist or are different
-  sourceFiles.forEach(file => {
-    const srcPath = path.join(SOURCE_DIR, file);
-    const destPath = path.join(TARGET_DIR, file);
-
-    if (!fs.existsSync(destPath)) {
-      console.log(`Adding: ${file}`);
-      fs.copyFileSync(srcPath, destPath);
-    }
-  });
-
-  // 3. Regenerate gallery.js
-  const galleryData = sourceFiles.map(file => {
+  const galleryData = currentImages.map(file => {
     // Randomized col/row spans for the brutalist look
     // 70% chance of 1x1, 20% 2x1/1x2, 10% 2x2
     const rand = Math.random();

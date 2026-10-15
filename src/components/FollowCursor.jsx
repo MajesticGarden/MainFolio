@@ -1,30 +1,38 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
-// FollowCursor — no GSAP dependency.
-// Uses a single rAF loop with lerp for the trailing circle.
-// The central dot moves pixel-perfectly via direct style mutations.
-// This avoids creating a new gsap.to({}) tween on every mousemove.
+/**
+ * FollowCursor — High-performance trailing cursor with zero dependencies.
+ * Automatically disabled on touch screens and coarse pointer devices to preserve native usability.
+ */
 export default function FollowCursor() {
   const dotRef = useRef(null);
   const circleRef = useRef(null);
+  const [enabled, setEnabled] = useState(false);
 
   useEffect(() => {
+    // Only run on fine-pointer devices (desktop mice / trackpads)
+    const mediaQuery = window.matchMedia('(pointer: fine) and (hover: hover)');
+    if (!mediaQuery.matches) {
+      setEnabled(false);
+      return;
+    }
+    setEnabled(true);
+
     const dot = dotRef.current;
     const circle = circleRef.current;
     if (!dot || !circle) return;
 
-    let mouseX = 0, mouseY = 0;       // current mouse position
-    let cx = 0, cy = 0;               // circle's lerped position
+    let mouseX = -100, mouseY = -100;
+    let cx = -100, cy = -100;
     let rafId = null;
+    let hasMoved = false;
 
-    // Lerp factor — higher = faster trailing (0.28 = very snappy)
     const LERP = 0.28;
 
     const tick = () => {
       cx += (mouseX - cx) * LERP;
       cy += (mouseY - cy) * LERP;
 
-      // Direct transform — no layout, no style.left/top reads
       dot.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0)`;
       circle.style.transform = `translate3d(${cx}px, ${cy}px, 0)`;
 
@@ -34,17 +42,23 @@ export default function FollowCursor() {
     const onMouseMove = (e) => {
       mouseX = e.clientX;
       mouseY = e.clientY;
+      if (!hasMoved) {
+        hasMoved = true;
+        cx = mouseX;
+        cy = mouseY;
+        dot.style.opacity = '1';
+        circle.style.opacity = '1';
+      }
     };
 
     const onPointerDown = () => {
-      dot.style.transition = 'transform 0.2s, scale 0.2s';
+      dot.style.transition = 'transform 0.15s ease, scale 0.15s ease';
       dot.style.scale = '0.5';
-      circle.style.scale = '1.5';
-      // Slight delay reset
+      circle.style.scale = '1.4';
       setTimeout(() => {
         dot.style.transition = '';
         circle.style.transition = '';
-      }, 300);
+      }, 200);
     };
 
     const onPointerUp = () => {
@@ -65,6 +79,8 @@ export default function FollowCursor() {
     };
   }, []);
 
+  if (!enabled) return null;
+
   return (
     <>
       {/* Outer trailing circle */}
@@ -77,11 +93,13 @@ export default function FollowCursor() {
           width: 38,
           height: 38,
           margin: '-19px 0 0 -19px',
-          border: '1px solid rgba(255,255,255,0.3)',
+          border: '1px solid rgba(255,255,255,0.4)',
           borderRadius: '50%',
           pointerEvents: 'none',
           zIndex: 9999,
+          opacity: 0,
           willChange: 'transform',
+          transition: 'opacity 0.3s ease',
         }}
       />
       {/* Inner solid dot */}
@@ -98,7 +116,9 @@ export default function FollowCursor() {
           borderRadius: '50%',
           pointerEvents: 'none',
           zIndex: 10000,
+          opacity: 0,
           willChange: 'transform',
+          transition: 'opacity 0.3s ease',
         }}
       />
     </>

@@ -1,9 +1,9 @@
 import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
-import { useSpring, animated } from '@react-spring/web';
 import FollowCursor from '../components/FollowCursor';
 import galleryImages from '../data/gallery.js';
 import Footer from '../components/Footer';
 import GrainOverlay from '../components/GrainOverlay';
+import PhotoLightbox from '../components/PhotoLightbox';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const CELL    = 440;   // column width (px)
@@ -13,32 +13,19 @@ const TILE_W  = COLS * (CELL + GAP); // width of one full horizontal tile
 
 const columnMultipliers = [0.85, 1.1, 0.95, 1.05, 0.9, 1.15, 1.0, 0.8, 1.2, 0.9, 1.0, 1.1, 0.95, 1.05];
 
-// We render 2 horizontal tiles + 3 vertical sets inside each column.
-// 2 tiles is enough to hide the seam on any viewport (TILE_W ~= 6.3k px).
 const H_SETS = 2;
-const V_SETS = 2; // Reduced from 3 to cut node count by 33% (still seamless)
+const V_SETS = 2;
 
 // Distribute images across columns
 const columnData = Array.from({ length: COLS }, (_, ci) =>
   galleryImages.filter((_, i) => i % COLS === ci)
 );
 
-// ─── Static styles (defined outside component = zero re-creation per render) ──
-
 // ─── ArtboardItem ─────────────────────────────────────────────────────────────
-// Pure, memo-wrapped so it never re-renders unless props change.
-// Images point to /thumbs/ (optimized ≤350 KB JPEG) instead of full /gallery/.
-// ArtboardItem points to /thumbs/ and uses a CSS variable for parallax.
-// It also uses IntersectionObserver to only render the <img> when near the viewport.
 const ArtboardItem = React.memo(function ArtboardItem({ file, isMono, index }) {
   const [inView, setInView] = useState(false);
   const [hovered, setHovered] = useState(false);
   const ref = useRef(null);
-
-  const { scale } = useSpring({
-    scale: hovered ? 1.05 : 1,
-    config: { mass: 1, tension: 120, friction: 14 }
-  });
 
   const exif = useMemo(() => {
     const isos = [100, 400, 800, 1600, 3200];
@@ -71,6 +58,8 @@ const ArtboardItem = React.memo(function ArtboardItem({ file, isMono, index }) {
   return (
     <div
       ref={ref}
+      className="artboard-item"
+      data-file={file}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -82,14 +71,15 @@ const ArtboardItem = React.memo(function ArtboardItem({ file, isMono, index }) {
         position: 'relative',
         boxShadow: hovered ? '0 10px 40px rgba(0,0,0,0.8)' : 'inset 0 0 40px rgba(0,0,0,0.8)',
         pointerEvents: 'auto',
+        cursor: 'pointer',
         flexShrink: 0,
         contain: 'strict',
-        transition: 'box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+        transition: 'box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
       }}
     >
       {inView && (
         <>
-          <animated.img
+          <img
             className="gallery-img-parallax"
             src={`/thumbs/${encodeURIComponent(file)}`}
             alt=""
@@ -104,9 +94,9 @@ const ArtboardItem = React.memo(function ArtboardItem({ file, isMono, index }) {
               pointerEvents: 'none',
               willChange: 'transform',
               filter: isMono ? 'grayscale(100%) contrast(1.1)' : 'none',
-              transition: 'filter 0.5s ease',
+              transition: 'filter 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
               transform: hovered 
-                ? 'translate3d(0, var(--img-parallax, 0px), 0) scale(1.05) rotate3d(1, 1, 0, 5deg)' 
+                ? 'translate3d(0, var(--img-parallax, 0px), 0) scale(1.04) rotate3d(1, 1, 0, 3deg)' 
                 : 'translate3d(0, var(--img-parallax, 0px), 0) scale(1) rotate3d(0, 0, 0, 0deg)',
             }}
           />
@@ -119,11 +109,11 @@ const ArtboardItem = React.memo(function ArtboardItem({ file, isMono, index }) {
             padding: '10px 14px', 
             opacity: hovered ? 1 : 0, 
             transform: hovered ? 'translateY(0)' : 'translateY(10px)',
-            background: 'rgba(10,10,10,0.45)', backdropFilter: 'blur(16px)',
-            borderRadius: '2px', border: '1px solid rgba(255,255,255,0.08)',
+            background: 'rgba(10,10,10,0.65)', backdropFilter: 'blur(16px)',
+            borderRadius: '2px', border: '1px solid rgba(255,255,255,0.1)',
             textTransform: 'uppercase', fontFamily: "'Space Mono', monospace", fontSize: '9px',
             color: 'rgba(255,255,255,0.85)', letterSpacing: '0.15em',
-            transition: 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+            transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
           }}>
             <div style={{ display: 'flex', gap: '8px' }}>
               <span>ISO.{exif.iso}</span>
@@ -147,14 +137,11 @@ const ArtboardItem = React.memo(function ArtboardItem({ file, isMono, index }) {
   );
 });
 
-
 // ─── Main Component ───────────────────────────────────────────────────────────
-export default function Artboard() {
+export default function Artboard({ onOpenGallery }) {
   const canvasRef   = useRef(null);
-  const colRefs     = useRef([]);   // direct refs to each .parallax-column node
-  const imgRefs     = useRef([]);   // flat list of all .gallery-img-parallax nodes
-  const colHeights  = useRef([]);   // cached scrollHeight / V_SETS per column
-  const heightsReady = useRef(false);
+  const colRefs     = useRef([]);
+  const colHeights  = useRef([]);
 
   const pan         = useRef({ x: -CELL * 2, y: -CELL * 1 });
   const dragging    = useRef(false);
@@ -164,13 +151,13 @@ export default function Artboard() {
   const lastPos     = useRef({ x: 0, y: 0 });
   const momentumRaf = useRef(null);
 
+  const [activePhoto, setActivePhoto] = useState(null);
   const [isMono, setIsMono]   = useState(false);
   const [isMoving, setIsMoving] = useState(false);
   const [time, setTime]       = useState(() =>
     new Date().toLocaleTimeString('en-GB', { timeZone: 'Europe/London', hour12: false })
   );
 
-  // Live clock — low-frequency, fine as state update
   useEffect(() => {
     const timer = setInterval(() => {
       setTime(new Date().toLocaleTimeString('en-GB', { timeZone: 'Europe/London', hour12: false }));
@@ -178,23 +165,15 @@ export default function Artboard() {
     return () => clearInterval(timer);
   }, []);
 
-  // ── Cache column DOM refs once after mount ──────────────────────────────────
-  // Avoids querySelectorAll on every rAF tick.
   useEffect(() => {
     if (!canvasRef.current) return;
     colRefs.current = Array.from(canvasRef.current.querySelectorAll('.parallax-column'));
-    imgRefs.current = Array.from(canvasRef.current.querySelectorAll('.gallery-img-parallax'));
 
-    // We need actual scrollHeight — wait one rAF so layout is painted
     requestAnimationFrame(() => {
       colHeights.current = colRefs.current.map(col => (col.scrollHeight || 3000) / V_SETS);
-      heightsReady.current = true;
     });
-  }, []); // runs once — DOM structure never changes
+  }, []);
 
-  // ── applyPan — the hot loop ─────────────────────────────────────────────────
-  // Reads only from refs (no state, no DOM queries).
-  // All writes are batched inside one rAF — zero forced-layout.
   const applyPan = useCallback(() => {
     if (rafId.current !== null) return;
     rafId.current = requestAnimationFrame(() => {
@@ -215,17 +194,14 @@ export default function Artboard() {
         col.style.transform = `translate3d(${wrappedX}px, ${wrappedY}px, 0)`;
       }
 
-      // Parallax on images — now 1 update per-frame via CSS variable
-      // instead of iterating over 700 items!
       const wiggle = 65;
       const internalOffset = ((pY * 0.045 % wiggle) + wiggle) % wiggle - (wiggle / 2);
       canvasRef.current.style.setProperty('--img-parallax', `${internalOffset}px`);
     });
   }, []);
 
-  // ── Pointer handlers ────────────────────────────────────────────────────────
   const onPointerDown = useCallback((e) => {
-    if (e.target.closest('button, a')) return;
+    if (e.target.closest('button, a, dialog')) return;
     if (momentumRaf.current) cancelAnimationFrame(momentumRaf.current);
     e.currentTarget.setPointerCapture(e.pointerId);
     dragging.current = true;
@@ -249,6 +225,18 @@ export default function Artboard() {
   const onPointerUp = useCallback((e) => {
     dragging.current = false;
     e.currentTarget.classList.remove('is-dragging');
+
+    // Stationary tap/click detection (< 6px movement)
+    const dist = Math.hypot(e.clientX - dragStart.current.x, e.clientY - dragStart.current.y);
+    if (dist < 6) {
+      const itemEl = document.elementFromPoint(e.clientX, e.clientY)?.closest('.artboard-item');
+      if (itemEl && itemEl.dataset.file) {
+        setActivePhoto(itemEl.dataset.file);
+        setIsMoving(false);
+        return;
+      }
+    }
+
     if (momentumRaf.current) cancelAnimationFrame(momentumRaf.current);
     let vx = velocity.current.x * 0.8;
     let vy = velocity.current.y * 0.8;
@@ -269,7 +257,6 @@ export default function Artboard() {
     momentumRaf.current = requestAnimationFrame(step);
   }, [applyPan]);
 
-  // ── Wheel handler — passive-false so preventDefault works ──────────────────
   const onWheel = useCallback((e) => {
     e.preventDefault();
     pan.current.x -= e.deltaX;
@@ -284,10 +271,8 @@ export default function Artboard() {
     return () => el.removeEventListener('wheel', onWheel);
   }, [onWheel]);
 
-  // Initial position
   useEffect(() => { applyPan(); }, [applyPan]);
 
-  // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <div
       id="artboard-root"
@@ -299,7 +284,6 @@ export default function Artboard() {
         width: '100vw',
         height: '100vh',
         overflow: 'hidden',
-        cursor: 'none',
         touchAction: 'none',
         userSelect: 'none',
         position: 'relative',
@@ -317,7 +301,6 @@ export default function Artboard() {
           display: 'flex', gap: `${GAP}px`,
         }}
       >
-        {/* H_SETS horizontal tiles for seamless horizontal loop */}
         {Array.from({ length: H_SETS }, (_, hSet) => (
           <React.Fragment key={hSet}>
             {columnData.map((colItems, colIdx) => (
@@ -330,10 +313,9 @@ export default function Artboard() {
                   flexDirection: 'column',
                   willChange: 'transform',
                   flexShrink: 0,
-                  contain: 'layout style', // isolate paint
+                  contain: 'layout style',
                 }}
               >
-                {/* V_SETS vertical copies for seamless vertical loop */}
                 {Array.from({ length: V_SETS }, (_, vSet) => (
                   <div key={vSet} style={{ display: 'flex', flexDirection: 'column' }}>
                     {colItems.map((img, i) => (
@@ -358,7 +340,13 @@ export default function Artboard() {
         background: 'linear-gradient(to bottom, #0a0a0a 0%, transparent 8%, transparent 92%, #0a0a0a 100%)',
       }} />
 
-      <Footer isMono={isMono} setIsMono={setIsMono} time={time} isMoving={isMoving} />
+      <Footer
+        isMono={isMono}
+        setIsMono={setIsMono}
+        time={time}
+        isMoving={isMoving}
+        onOpenGallery={onOpenGallery}
+      />
 
       {/* ── Branding ─────────────────────────────────────────────────────── */}
       <div 
@@ -368,7 +356,7 @@ export default function Artboard() {
           fontFamily: "'Syne', sans-serif",
           fontSize: 'clamp(20px, 4vw, 60px)',
           fontWeight: 800,
-          color: 'rgba(255,255,255,0.8)',
+          color: 'rgba(255,255,255,0.85)',
           textTransform: 'uppercase',
           lineHeight: 0.8,
           letterSpacing: '-0.02em',
@@ -376,6 +364,15 @@ export default function Artboard() {
         }}>
         MO MOVAHED
       </div>
+
+      {/* ── Lightbox Modal ───────────────────────────────────────────────── */}
+      <PhotoLightbox
+        photo={activePhoto}
+        allPhotos={galleryImages}
+        onClose={() => setActivePhoto(null)}
+        onSelectPhoto={setActivePhoto}
+        isMono={isMono}
+      />
     </div>
   );
 }
