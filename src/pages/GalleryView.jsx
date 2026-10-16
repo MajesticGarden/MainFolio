@@ -8,6 +8,13 @@ export default function GalleryView({ onBackToCanvas, isMono, setIsMono }) {
   const [filter, setFilter] = useState('ALL');
 
   // Categorize images based on filenames / tags
+  const categoryCounts = useMemo(() => ({
+    ALL: galleryImages.length,
+    PORTRAITS: galleryImages.filter(img => /Mohammad|portrait|_DSC0[789]|_DSC10|_DSC11|_DSC2[123]/i.test(img.file)).length,
+    WEDDINGS: galleryImages.filter(img => /DSC_|_DSC7|_DSC9|_DSC6/i.test(img.file)).length,
+    STREET: galleryImages.filter(img => /Street|Untitled|_DSC3|_DSC4|_DSC5/i.test(img.file)).length,
+  }), []);
+
   const filteredImages = useMemo(() => {
     if (filter === 'ALL') return galleryImages;
     if (filter === 'PORTRAITS') {
@@ -113,7 +120,7 @@ export default function GalleryView({ onBackToCanvas, isMono, setIsMono }) {
                 transition: 'all 0.2s',
               }}
             >
-              {cat}
+              {cat} ({categoryCounts[cat]})
             </button>
           ))}
           <button

@@ -258,7 +258,7 @@ export default function PhotoLightbox({ photo, allPhotos = [], onClose, onSelect
             </button>
           )}
 
-          {/* Photograph Element */}
+          {/* Photograph Element with Progressive Thumb-to-Master Reveal */}
           <div style={{
             position: 'relative',
             maxWidth: '90vw',
@@ -268,20 +268,51 @@ export default function PhotoLightbox({ photo, allPhotos = [], onClose, onSelect
             alignItems: 'center',
             pointerEvents: 'auto',
           }}>
+            {/* Instant Thumbnail Base (Loaded from memory cache) */}
+            {!imageLoaded && (
+              <img
+                src={thumbUrl}
+                alt=""
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  maxWidth: '100%',
+                  maxHeight: '78vh',
+                  objectFit: 'contain',
+                  filter: lightboxMono ? 'grayscale(100%) contrast(1.15) blur(8px)' : 'blur(8px)',
+                  transform: 'scale(0.99)',
+                  opacity: 0.85,
+                  pointerEvents: 'none',
+                  transition: 'opacity 0.4s ease',
+                }}
+              />
+            )}
+
+            {/* High-Res RAW Master Image */}
             <img
               src={originalUrl}
               alt={fileName}
               fetchpriority="high"
+              decoding="async"
               onLoad={() => setImageLoaded(true)}
+              onError={(e) => {
+                if (!e.currentTarget.dataset.retried) {
+                  e.currentTarget.dataset.retried = 'true';
+                  e.currentTarget.src = thumbUrl;
+                  setImageLoaded(true);
+                }
+              }}
               style={{
                 maxWidth: '100%',
                 maxHeight: '78vh',
                 objectFit: 'contain',
                 display: 'block',
+                position: 'relative',
+                zIndex: 2,
                 boxShadow: '0 25px 80px rgba(0, 0, 0, 0.95)',
                 filter: lightboxMono ? 'grayscale(100%) contrast(1.15)' : 'none',
-                opacity: imageLoaded ? 1 : 0.4,
-                transition: 'opacity 0.3s ease, filter 0.4s ease',
+                opacity: imageLoaded ? 1 : 0,
+                transition: 'opacity 0.35s ease, filter 0.4s ease',
               }}
             />
           </div>

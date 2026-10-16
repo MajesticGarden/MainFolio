@@ -161,9 +161,13 @@ export default function Artboard({ onOpenGallery, isMono: controlledMono, setIsM
     if (!canvasRef.current) return;
     colRefs.current = Array.from(canvasRef.current.querySelectorAll('.parallax-column'));
 
-    requestAnimationFrame(() => {
+    const measure = () => {
       colHeights.current = colRefs.current.map(col => (col.scrollHeight || 3000) / V_SETS);
-    });
+    };
+
+    requestAnimationFrame(measure);
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
   }, []);
 
   const applyPan = useCallback(() => {

@@ -51,9 +51,14 @@ function syncGallery() {
     .filter(file => VALID_EXTENSIONS.includes(path.extname(file).toLowerCase()));
 
   const galleryData = currentImages.map(file => {
-    // Randomized col/row spans for the brutalist look
-    // 70% chance of 1x1, 20% 2x1/1x2, 10% 2x2
-    const rand = Math.random();
+    // Deterministic pseudo-randomness based on filename hash to maintain
+    // stable git history and avoid dirtying files on every build
+    let hash = 0;
+    for (let j = 0; j < file.length; j++) {
+      hash = ((hash << 5) - hash) + file.charCodeAt(j);
+      hash |= 0;
+    }
+    const rand = Math.abs(hash % 100) / 100;
     let col = 1, row = 1;
     if (rand > 0.9) { col = 2; row = 2; }
     else if (rand > 0.8) { col = 2; row = 1; }
