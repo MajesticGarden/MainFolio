@@ -9,7 +9,7 @@ const headerColStyle = {
   textTransform: 'uppercase',
 };
 
-export default function Footer({ time, isMoving }) {
+export default function Footer({ time, isMoving, onOpenContact }) {
   return (
     <div 
       className="footer-pod-left"
@@ -30,17 +30,45 @@ export default function Footer({ time, isMoving }) {
       </div>
       <div style={{ ...headerColStyle, borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '40px' }}>
         <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '8px', letterSpacing: '0.3em' }}>(CONNECT)</span><br />
-        GET IN TOUCH<br />
+        <button
+          onClick={onOpenContact}
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            fontFamily: "'Space Mono', monospace",
+            fontSize: '10px',
+            letterSpacing: '0.08em',
+            color: 'white',
+            cursor: 'pointer',
+            textAlign: 'left',
+            textTransform: 'uppercase',
+            borderBottom: '1px dashed rgba(255,255,255,0.6)',
+            marginBottom: '4px',
+            display: 'inline-block',
+          }}
+          onMouseEnter={(e) => (e.target.style.borderBottom = '1px solid white')}
+          onMouseLeave={(e) => (e.target.style.borderBottom = '1px dashed rgba(255,255,255,0.6)')}
+        >
+          GET IN TOUCH [FORM]
+        </button>
+        <br />
         <a 
           href="mailto:hello@momovahed.com" 
           style={{ 
-            color: 'white', 
+            color: 'rgba(255,255,255,0.7)', 
             textDecoration: 'none', 
             transition: 'all 0.3s',
             borderBottom: '1px solid transparent'
           }}
-          onMouseEnter={e => e.target.style.borderBottom = '1px solid white'}
-          onMouseLeave={e => e.target.style.borderBottom = '1px solid transparent'}
+          onMouseEnter={e => {
+            e.target.style.borderBottom = '1px solid white';
+            e.target.style.color = 'white';
+          }}
+          onMouseLeave={e => {
+            e.target.style.borderBottom = '1px solid transparent';
+            e.target.style.color = 'rgba(255,255,255,0.7)';
+          }}
         >
           HELLO@MOMOVAHED.COM
         </a>

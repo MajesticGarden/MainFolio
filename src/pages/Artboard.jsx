@@ -5,6 +5,7 @@ import Footer from '../components/Footer';
 import HeaderNav from '../components/HeaderNav';
 import GrainOverlay from '../components/GrainOverlay';
 import PhotoLightbox from '../components/PhotoLightbox';
+import ContactModal from '../components/ContactModal';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const CELL    = 440;   // column width (px)
@@ -141,6 +142,7 @@ export default function Artboard({ onOpenGallery, isMono: controlledMono, setIsM
   const momentumRaf = useRef(null);
 
   const [activePhoto, setActivePhoto] = useState(null);
+  const [isContactOpen, setIsContactOpen] = useState(false);
   const [internalMono, setInternalMono] = useState(false);
   const isMono = controlledMono !== undefined ? controlledMono : internalMono;
   const setIsMono = setControlledMono || setInternalMono;
@@ -345,6 +347,12 @@ export default function Artboard({ onOpenGallery, isMono: controlledMono, setIsM
       <Footer
         time={time}
         isMoving={isMoving}
+        onOpenContact={() => setIsContactOpen(true)}
+      />
+
+      <ContactModal
+        isOpen={isContactOpen}
+        onClose={() => setIsContactOpen(false)}
       />
 
       {/* ── Branding ─────────────────────────────────────────────────────── */}
