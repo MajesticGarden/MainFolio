@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Anton&display=swap');
-
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -7,11 +5,19 @@
 }
 
 :root {
-  --bg: #0a0a0a;
-  --text: #e8e8e8;
-  --accent: #ffffff;
+  --bg: #0b0b0a;
+  --bg-elevated: #141412;
+  --bg-paper: #f2efe9;
+  --text: #f3f0e8;
+  --text-muted: rgba(243, 240, 232, 0.56);
+  --text-ink: #141413;
+  --accent: #f3f0e8;
+  --tungsten: #c85a32;
+  --hairline: rgba(243, 240, 232, 0.11);
+  --hairline-dark: rgba(20, 20, 19, 0.14);
   --mono: 'Space Mono', monospace;
-  --display: 'Anton', sans-serif;
+  --serif: 'Instrument Serif', Georgia, serif;
+  --display: 'Syne', sans-serif;
   --cell: 440px;
   --img-parallax: 0px;
 }
@@ -19,141 +25,80 @@
 html, body, #root {
   width: 100%;
   height: 100%;
-  overflow: hidden;
   background: var(--bg);
   color: var(--text);
   font-family: var(--mono);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Enable custom cursor only for desktop mouse/trackpad users */
+/* Custom cursor only for desktop pointers */
 @media (pointer: fine) and (hover: hover) {
-  html, body, #root, #artboard-root {
+  #artboard-root, .editorial-root {
     cursor: none;
   }
 }
 
 @media (pointer: coarse), (hover: none) {
-  html, body, #root, #artboard-root {
+  html, body, #root, #artboard-root, .editorial-root {
     cursor: auto;
   }
 }
 
-/* ======= CRT Scanlines Overlay =======
-   Static, hardware-accelerated CSS gradient composited once (zero repaint cost) */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background:
-    linear-gradient(
-      rgba(18, 16, 16, 0) 50%,
-      rgba(0, 0, 0, 0.12) 50%
-    ),
-    linear-gradient(
-      90deg,
-      rgba(255, 0, 0, 0.02),
-      rgba(0, 255, 0, 0.01),
-      rgba(0, 0, 255, 0.02)
-    );
-  background-size: 100% 3px, 3px 100%;
-  pointer-events: none;
-  z-index: 9998;
-}
-
-/* ======= Cinematic Film Grain =======
-   Single efficient grain layer with hardware compositing */
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.07'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  background-size: 200px 200px;
-  opacity: 0.22;
-  pointer-events: none;
-  z-index: 9997;
-  animation: grain 0.8s steps(6) infinite;
-  will-change: transform;
-}
-
-@keyframes grain {
-  0%   { transform: translate(0, 0); }
-  16%  { transform: translate(-2%, -2%); }
-  33%  { transform: translate(2%, 1%); }
-  50%  { transform: translate(-1%, 2%); }
-  66%  { transform: translate(1%, -1%); }
-  83%  { transform: translate(-2%, 1%); }
-  100% { transform: translate(0, 0); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  body::after {
-    animation: none !important;
-  }
-}
-
-/* ======= Brand Glitch ======= */
+/* Refined Brand Lockup (Replaces Neon Glitch with Tungsten Film Shift) */
 .brand-glitch {
   display: inline-block;
-  transition: all 0.3s ease;
-  cursor: default;
+  transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
 }
+
 .brand-glitch:hover {
-  text-shadow: 2px 0 #ff00c1, -2px 0 #00fff9;
-  animation: glitch 0.3s infinite;
   opacity: 1 !important;
+  transform: translateX(3px);
 }
 
-@keyframes glitch {
-  0% { transform: translate(0); }
-  20% { transform: translate(-2px, 1px); }
-  40% { transform: translate(-2px, -1px); }
-  60% { transform: translate(2px, 1px); }
-  80% { transform: translate(2px, -1px); }
-  100% { transform: translate(0); }
-}
-
-/* ======= Portfolio Link Button ======= */
+/* Portfolio Link Button */
 .portfolio-link-btn {
   display: inline-block;
   text-decoration: none;
-  background: white;
-  border: 1px solid white;
-  color: black;
-  padding: 12px 28px;
-  font-family: 'Space Mono', monospace;
-  font-size: 13px;
+  background: var(--text);
+  border: 1px solid var(--text);
+  color: var(--bg);
+  padding: 12px 26px;
+  font-family: var(--mono);
+  font-size: 11px;
   font-weight: 700;
   cursor: pointer;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-  transform: translateY(0) scale(1);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
   white-space: nowrap;
 }
 
 .portfolio-link-btn:hover {
-  background: #0a0a0a;
-  color: white;
-  box-shadow: 0 0 35px rgba(255, 255, 255, 0.5);
-  transform: translateY(-3px) scale(1.02);
+  background: var(--tungsten);
+  border-color: var(--tungsten);
+  color: #fff;
+  transform: translateY(-2px);
 }
 
-/* ======= Responsive Footer Pods ======= */
+/* Responsive Footer Pods on Infinite Artboard */
 .footer-pod-left {
   position: fixed;
   bottom: 24px;
   left: 24px;
-  padding: 22px 30px;
+  padding: 18px 26px;
   z-index: 100;
   pointer-events: auto;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 14px;
+  background: rgba(11, 11, 10, 0.78);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--hairline);
+  border-radius: 2px;
   display: flex;
-  gap: 40px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+  gap: 36px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -169,49 +114,219 @@ body::after {
   gap: 14px;
 }
 
-/* Mobile & Tablet Adaptations (< 768px) */
+/* Editorial Monograph & Contact-Sheet Styles */
+.editorial-root {
+  width: 100vw;
+  height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: var(--bg);
+  color: var(--text);
+  scroll-behavior: smooth;
+}
+
+.editorial-shell {
+  max-width: 1640px;
+  margin: 0 auto;
+  border-left: 1px solid var(--hairline);
+  border-right: 1px solid var(--hairline);
+}
+
+.editorial-serif {
+  font-family: var(--serif);
+  font-weight: 400;
+  line-height: 0.96;
+  letter-spacing: -0.02em;
+}
+
+.pill-control {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--hairline);
+  padding: 7px 14px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.22s ease;
+}
+
+.pill-control:hover {
+  color: var(--text);
+  border-color: rgba(243, 240, 232, 0.4);
+}
+
+.pill-control.is-active {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+  font-weight: 700;
+}
+
+.pill-control.is-accent {
+  background: var(--tungsten);
+  border-color: var(--tungsten);
+  color: #fff;
+  font-weight: 700;
+}
+
+.pill-control.is-accent:hover {
+  filter: brightness(1.1);
+}
+
+/* Editorial Story Chapters */
+.chapter-row {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 28px;
+  padding: 64px 36px;
+  border-bottom: 1px solid var(--hairline);
+  align-items: end;
+}
+
+.chapter-row.paper-chapter {
+  background: var(--bg-paper);
+  color: var(--text-ink);
+  border-bottom-color: var(--hairline-dark);
+}
+
+.chapter-cinema-media {
+  grid-column: 1 / -1;
+  aspect-ratio: 2.2 / 1;
+  overflow: hidden;
+  background: #141412;
+  cursor: pointer;
+  position: relative;
+}
+
+.chapter-cinema-meta {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  padding-top: 8px;
+  flex-wrap: wrap;
+}
+
+.chapter-asym-media {
+  grid-column: 1 / 8;
+  aspect-ratio: 4 / 5;
+  max-height: 78vh;
+  overflow: hidden;
+  background: #141412;
+  cursor: pointer;
+}
+
+.chapter-asym-meta {
+  grid-column: 8 / 13;
+  padding-bottom: 24px;
+}
+
+.chapter-diptych-a {
+  grid-column: 1 / 7;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: #141412;
+  cursor: pointer;
+}
+
+.chapter-diptych-b {
+  grid-column: 7 / 13;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: #141412;
+  cursor: pointer;
+}
+
+.editorial-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.75s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s ease;
+}
+
+.chapter-cinema-media:hover .editorial-photo,
+.chapter-asym-media:hover .editorial-photo,
+.chapter-diptych-a:hover .editorial-photo,
+.chapter-diptych-b:hover .editorial-photo {
+  transform: scale(1.025);
+}
+
+/* Contact Sheet Archive Grid */
+.contact-sheet-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+  border-top: 1px solid var(--hairline);
+}
+
+.contact-sheet-cell {
+  padding: 20px;
+  border-right: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+  cursor: pointer;
+  transition: background 0.25s ease;
+}
+
+.contact-sheet-cell:hover {
+  background: var(--bg-elevated);
+}
+
+/* Mobile & Tablet Adaptations */
+@media (max-width: 900px) {
+  .chapter-row {
+    padding: 36px 18px;
+    gap: 18px;
+  }
+  .chapter-cinema-media {
+    aspect-ratio: 16 / 10;
+  }
+  .chapter-asym-media,
+  .chapter-asym-meta,
+  .chapter-diptych-a,
+  .chapter-diptych-b {
+    grid-column: 1 / -1;
+  }
+  .chapter-asym-meta {
+    padding-bottom: 4px;
+  }
+}
+
 @media (max-width: 768px) {
   nav {
     top: 20px !important;
     right: 14px !important;
     gap: 6px !important;
   }
-
   nav button {
     padding: 7px 11px !important;
     font-size: 10px !important;
     letter-spacing: 0.08em !important;
   }
-
   .brand-glitch {
     top: 22px !important;
     left: 14px !important;
-    font-size: clamp(16px, 4.5vw, 24px) !important;
   }
-
   .footer-pod-left {
     bottom: 16px !important;
-    top: auto !important;
     left: 14px !important;
-    right: auto !important;
     padding: 10px 14px !important;
     max-width: calc(100vw - 90px) !important;
     gap: 14px !important;
   }
-
   .footer-pod-left > div {
     font-size: 8px !important;
   }
-
   .footer-pod-left > div:not(:first-child) {
     border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
     padding-left: 12px !important;
   }
 }
 
-/* ======= Native Dialog Lightbox Styling ======= */
 dialog::backdrop {
-  background-color: rgba(5, 5, 5, 0.94);
-  backdrop-filter: blur(25px);
-  -webkit-backdrop-filter: blur(25px);
+  background-color: rgba(8, 8, 7, 0.95);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
 }
