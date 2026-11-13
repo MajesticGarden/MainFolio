@@ -24,6 +24,40 @@ function PortfolioRoutes() {
         path="/gallery"
         element={
           <GalleryView
+            initialFilter="ALL"
+            onBackToCanvas={() => navigate('/')}
+            isMono={isMono}
+            setIsMono={setIsMono}
+          />
+        }
+      />
+      <Route
+        path="/weddings"
+        element={
+          <GalleryView
+            initialFilter="WEDDINGS"
+            onBackToCanvas={() => navigate('/')}
+            isMono={isMono}
+            setIsMono={setIsMono}
+          />
+        }
+      />
+      <Route
+        path="/portraits"
+        element={
+          <GalleryView
+            initialFilter="PORTRAITS"
+            onBackToCanvas={() => navigate('/')}
+            isMono={isMono}
+            setIsMono={setIsMono}
+          />
+        }
+      />
+      <Route
+        path="/street"
+        element={
+          <GalleryView
+            initialFilter="STREET"
             onBackToCanvas={() => navigate('/')}
             isMono={isMono}
             setIsMono={setIsMono}
