@@ -3,41 +3,38 @@ import FollowCursor from '../components/FollowCursor';
 import galleryImages from '../data/gallery.js';
 import Footer from '../components/Footer';
 import HeaderNav from '../components/HeaderNav';
-import GrainOverlay from '../components/GrainOverlay';
 import PhotoLightbox from '../components/PhotoLightbox';
 import ContactModal from '../components/ContactModal';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
-const CELL    = 440;   // column width (px)
-const COLS    = 14;    // number of visible columns
-const GAP     = 6;     // gap between columns (px)
-const TILE_W  = COLS * (CELL + GAP); // width of one full horizontal tile
-
+const CELL   = 440;
+const COLS   = 14;
+const GAP    = 10;
+const TILE_W = COLS * (CELL + GAP);
 const columnMultipliers = [0.85, 1.1, 0.95, 1.05, 0.9, 1.15, 1.0, 0.8, 1.2, 0.9, 1.0, 1.1, 0.95, 1.05];
-
 const H_SETS = 2;
 const V_SETS = 2;
 
-// Distribute images across columns
 const columnData = Array.from({ length: COLS }, (_, ci) =>
   galleryImages.filter((_, i) => i % COLS === ci)
 );
 
-// ─── ArtboardItem ─────────────────────────────────────────────────────────────
+// ─── ArtboardItem ────────────────────────────────────────────────────────────
 const ArtboardItem = React.memo(function ArtboardItem({ file, isMono, index }) {
   const [loaded, setLoaded] = useState(false);
   const [hovered, setHovered] = useState(false);
 
   const exif = useMemo(() => {
-    const isos = [100, 400, 800, 1600, 3200];
+    const isos = [100, 400, 800, 1600];
     const shutters = ['1/125', '1/250', '1/500', '1/1000'];
-    const lenses = ['35MM', '50MM', '85MM'];
-    const aperture = ['f/1.8', 'f/2.8', 'f/4.0', 'f/5.6'];
+    const lenses = ['24MM', '35MM', '50MM', '85MM'];
+    const aperture = ['f/1.4', 'f/1.8', 'f/2.8', 'f/4.0'];
     return {
+      frame: String((index % 99) + 1).padStart(3, '0'),
       iso: isos[index % isos.length],
       shutter: shutters[index % shutters.length],
       lens: lenses[index % lenses.length],
-      aperture: aperture[index % aperture.length]
+      aperture: aperture[index % aperture.length],
     };
   }, [index]);
 
@@ -50,22 +47,22 @@ const ArtboardItem = React.memo(function ArtboardItem({ file, isMono, index }) {
       style={{
         width: '100%',
         height: '550px',
-        marginBottom: '8px',
+        marginBottom: '10px',
         overflow: 'hidden',
-        background: '#0d0d0d',
+        background: '#121210',
         position: 'relative',
-        boxShadow: hovered ? '0 10px 40px rgba(0,0,0,0.8)' : 'inset 0 0 40px rgba(0,0,0,0.8)',
+        border: hovered ? '1px solid rgba(200, 90, 50, 0.55)' : '1px solid rgba(243, 240, 232, 0.08)',
         pointerEvents: 'auto',
         cursor: 'pointer',
         flexShrink: 0,
         contain: 'paint layout',
-        transition: 'box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+        transition: 'border-color 0.35s ease',
       }}
     >
       <img
         className="gallery-img-parallax"
         src={`/thumbs/${encodeURIComponent(file)}`}
-        alt=""
+        alt={`Mo Movahed Frame ${exif.frame}`}
         draggable={false}
         decoding="async"
         onLoad={() => setLoaded(true)}
@@ -83,56 +80,78 @@ const ArtboardItem = React.memo(function ArtboardItem({ file, isMono, index }) {
           pointerEvents: 'none',
           willChange: 'transform',
           opacity: loaded ? 1 : 0,
-          filter: isMono ? 'grayscale(100%) contrast(1.1)' : 'none',
-          transition: 'opacity 0.35s ease, filter 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-          transform: hovered 
-            ? 'translate3d(0, var(--img-parallax, 0px), 0) scale(1.04) rotate3d(1, 1, 0, 3deg)' 
-            : 'translate3d(0, var(--img-parallax, 0px), 0) scale(1) rotate3d(0, 0, 0, 0deg)',
+          filter: isMono ? 'grayscale(100%) contrast(1.08)' : 'none',
+          transition: 'opacity 0.4s ease, filter 0.4s ease, transform 0.55s cubic-bezier(0.16, 1, 0.3, 1)',
+          transform: hovered
+            ? 'translate3d(0, var(--img-parallax, 0px), 0) scale(1.03)'
+            : 'translate3d(0, var(--img-parallax, 0px), 0) scale(1)',
         }}
       />
 
-      {/* ── EXIF HUD ── */}
-      <div style={{
-        position: 'absolute', bottom: '16px', left: '16px', right: '16px',
-        zIndex: 30, pointerEvents: 'none',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        padding: '10px 14px', 
-        opacity: hovered ? 1 : 0, 
-        transform: hovered ? 'translateY(0)' : 'translateY(10px)',
-        background: 'rgba(10,10,10,0.65)', backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        borderRadius: '2px', border: '1px solid rgba(255,255,255,0.1)',
-        textTransform: 'uppercase', fontFamily: "'Space Mono', monospace", fontSize: '9px',
-        color: 'rgba(255,255,255,0.85)', letterSpacing: '0.15em',
-        transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-      }}>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <span>ISO.{exif.iso}</span>
-          <span style={{ opacity: 0.3 }}>|</span>
-          <span>{exif.aperture}</span>
-        </div>
-        <div>{exif.shutter}</div>
-        <div style={{ opacity: 0.5 }}>{exif.lens}.OPTIC</div>
+      {/* Subtle Film Edge Frame Counter */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '12px',
+          left: '12px',
+          zIndex: 25,
+          pointerEvents: 'none',
+          padding: '3px 7px',
+          background: 'rgba(11, 11, 10, 0.62)',
+          fontFamily: "'Space Mono', monospace",
+          fontSize: '9px',
+          letterSpacing: '0.14em',
+          color: hovered ? '#c85a32' : 'rgba(243, 240, 232, 0.55)',
+          transition: 'color 0.3s ease',
+        }}
+      >
+        {exif.frame}A
       </div>
 
-      {/* Soft Edge Overlay */}
-      <div style={{
-        position: 'absolute',
-        inset: 0,
-        boxShadow: 'inset 0 0 60px 20px #0a0a0a',
-        pointerEvents: 'none',
-        zIndex: 20,
-      }} />
+      {/* Editorial EXIF HUD on Hover */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: '14px',
+          left: '14px',
+          right: '14px',
+          zIndex: 30,
+          pointerEvents: 'none',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '9px 12px',
+          opacity: hovered ? 1 : 0,
+          transform: hovered ? 'translateY(0)' : 'translateY(8px)',
+          background: 'rgba(11, 11, 10, 0.84)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          border: '1px solid rgba(243, 240, 232, 0.14)',
+          textTransform: 'uppercase',
+          fontFamily: "'Space Mono', monospace",
+          fontSize: '9px',
+          color: '#f3f0e8',
+          letterSpacing: '0.14em',
+          transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+        }}
+      >
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <span style={{ color: '#c85a32' }}>{exif.lens}</span>
+          <span style={{ opacity: 0.3 }}>/</span>
+          <span>{exif.aperture}</span>
+        </div>
+        <div>{exif.shutter}s</div>
+        <div style={{ opacity: 0.6 }}>ISO {exif.iso}</div>
+      </div>
     </div>
   );
 });
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// ─── Main Component ──────────────────────────────────────────────────────────
 export default function Artboard({ onOpenGallery, isMono: controlledMono, setIsMono: setControlledMono }) {
   const canvasRef   = useRef(null);
   const colRefs     = useRef([]);
   const colHeights  = useRef([]);
-
   const pan         = useRef({ x: -CELL * 2, y: -CELL * 1 });
   const dragging    = useRef(false);
   const dragStart   = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
@@ -144,11 +163,12 @@ export default function Artboard({ onOpenGallery, isMono: controlledMono, setIsM
   const [activePhoto, setActivePhoto] = useState(null);
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [internalMono, setInternalMono] = useState(false);
+
   const isMono = controlledMono !== undefined ? controlledMono : internalMono;
   const setIsMono = setControlledMono || setInternalMono;
 
   const [isMoving, setIsMoving] = useState(false);
-  const [time, setTime]       = useState(() =>
+  const [time, setTime] = useState(() =>
     new Date().toLocaleTimeString('en-GB', { timeZone: 'Europe/London', hour12: false })
   );
 
@@ -164,7 +184,7 @@ export default function Artboard({ onOpenGallery, isMono: controlledMono, setIsM
     colRefs.current = Array.from(canvasRef.current.querySelectorAll('.parallax-column'));
 
     const measure = () => {
-      colHeights.current = colRefs.current.map(col => (col.scrollHeight || 3000) / V_SETS);
+      colHeights.current = colRefs.current.map((col) => (col.scrollHeight || 3000) / V_SETS);
     };
 
     requestAnimationFrame(measure);
@@ -176,7 +196,7 @@ export default function Artboard({ onOpenGallery, isMono: controlledMono, setIsM
     if (rafId.current !== null) return;
     rafId.current = requestAnimationFrame(() => {
       rafId.current = null;
-
+      if (!canvasRef.current) return;
       const wrappedX = ((pan.current.x % TILE_W) + TILE_W) % TILE_W - TILE_W;
       const pY = pan.current.y;
 
@@ -187,19 +207,18 @@ export default function Artboard({ onOpenGallery, isMono: controlledMono, setIsM
         const col = cols[idx];
         const mult = columnMultipliers[idx % columnMultipliers.length];
         const oneSetH = heights[idx] || 3000;
-
-        const wrappedY = ((pY * mult % oneSetH) + oneSetH) % oneSetH - oneSetH;
+        const wrappedY = (((pY * mult) % oneSetH) + oneSetH) % oneSetH - oneSetH;
         col.style.transform = `translate3d(${wrappedX}px, ${wrappedY}px, 0)`;
       }
 
       const wiggle = 65;
-      const internalOffset = ((pY * 0.045 % wiggle) + wiggle) % wiggle - (wiggle / 2);
+      const internalOffset = (((pY * 0.045) % wiggle) + wiggle) % wiggle - wiggle / 2;
       canvasRef.current.style.setProperty('--img-parallax', `${internalOffset}px`);
     });
   }, []);
 
   const onPointerDown = useCallback((e) => {
-    if (e.target.closest('button, a, dialog')) return;
+    if (e.target.closest('button, a, dialog, .brand-masthead')) return;
     if (momentumRaf.current) cancelAnimationFrame(momentumRaf.current);
     e.currentTarget.setPointerCapture(e.pointerId);
     dragging.current = true;
@@ -215,6 +234,7 @@ export default function Artboard({ onOpenGallery, isMono: controlledMono, setIsM
     velocity.current.x = e.clientX - lastPos.current.x;
     velocity.current.y = e.clientY - lastPos.current.y;
     lastPos.current = { x: e.clientX, y: e.clientY };
+
     pan.current.x = dragStart.current.panX + (e.clientX - dragStart.current.x);
     pan.current.y = dragStart.current.panY + (e.clientY - dragStart.current.y);
     applyPan();
@@ -224,7 +244,6 @@ export default function Artboard({ onOpenGallery, isMono: controlledMono, setIsM
     dragging.current = false;
     e.currentTarget.classList.remove('is-dragging');
 
-    // Stationary tap/click detection (< 6px movement)
     const dist = Math.hypot(e.clientX - dragStart.current.x, e.clientY - dragStart.current.y);
     if (dist < 6) {
       const itemEl = document.elementFromPoint(e.clientX, e.clientY)?.closest('.artboard-item');
@@ -240,6 +259,7 @@ export default function Artboard({ onOpenGallery, isMono: controlledMono, setIsM
     let vy = velocity.current.y * 0.8;
     const FRICTION = 0.92;
     const MIN_V = 0.3;
+
     const step = () => {
       vx *= FRICTION;
       vy *= FRICTION;
@@ -269,7 +289,9 @@ export default function Artboard({ onOpenGallery, isMono: controlledMono, setIsM
     return () => el.removeEventListener('wheel', onWheel);
   }, [onWheel]);
 
-  useEffect(() => { applyPan(); }, [applyPan]);
+  useEffect(() => {
+    applyPan();
+  }, [applyPan]);
 
   return (
     <div
@@ -285,18 +307,20 @@ export default function Artboard({ onOpenGallery, isMono: controlledMono, setIsM
         touchAction: 'none',
         userSelect: 'none',
         position: 'relative',
-        background: '#0a0a0a',
+        background: '#0b0b0a',
       }}
     >
       <FollowCursor />
-      <GrainOverlay />
 
-      {/* ── Draggable Canvas ─────────────────────────────────────────────── */}
+      {/* Draggable Infinite Canvas */}
       <div
         ref={canvasRef}
         style={{
-          position: 'absolute', top: 0, left: 0,
-          display: 'flex', gap: `${GAP}px`,
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          display: 'flex',
+          gap: `${GAP}px`,
         }}
       >
         {Array.from({ length: H_SETS }, (_, hSet) => (
@@ -332,11 +356,16 @@ export default function Artboard({ onOpenGallery, isMono: controlledMono, setIsM
         ))}
       </div>
 
-      {/* ── Vertical Vignette ─────────────────────────────────────────────── */}
-      <div style={{
-        position: 'fixed', inset: 0, zIndex: 50, pointerEvents: 'none',
-        background: 'linear-gradient(to bottom, #0a0a0a 0%, transparent 8%, transparent 92%, #0a0a0a 100%)',
-      }} />
+      {/* Subtle Top & Bottom Cinema Edge */}
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 50,
+          pointerEvents: 'none',
+          background: 'linear-gradient(to bottom, rgba(11,11,10,0.82) 0%, transparent 11%, transparent 89%, rgba(11,11,10,0.86) 100%)',
+        }}
+      />
 
       <HeaderNav
         isMono={isMono}
@@ -355,24 +384,50 @@ export default function Artboard({ onOpenGallery, isMono: controlledMono, setIsM
         onClose={() => setIsContactOpen(false)}
       />
 
-      {/* ── Branding ─────────────────────────────────────────────────────── */}
-      <div 
-        className="brand-glitch"
+      {/* Editorial Masthead */}
+      <div
+        className="brand-glitch brand-masthead"
+        onClick={onOpenGallery}
+        title="Enter Editorial Stories & Monograph"
         style={{
-          position: 'fixed', top: 40, left: 24, zIndex: 110, pointerEvents: 'auto',
-          fontFamily: "'Syne', sans-serif",
-          fontSize: 'clamp(20px, 4vw, 60px)',
-          fontWeight: 800,
-          color: 'rgba(255,255,255,0.85)',
-          textTransform: 'uppercase',
-          lineHeight: 0.8,
-          letterSpacing: '-0.02em',
-          willChange: 'transform',
-        }}>
-        MO MOVAHED
+          position: 'fixed',
+          top: 28,
+          left: 24,
+          zIndex: 110,
+          pointerEvents: 'auto',
+          background: 'rgba(11, 11, 10, 0.72)',
+          backdropFilter: 'blur(14px)',
+          WebkitBackdropFilter: 'blur(14px)',
+          border: '1px solid rgba(243, 240, 232, 0.12)',
+          padding: '14px 20px',
+        }}
+      >
+        <div
+          style={{
+            fontFamily: "'Instrument Serif', Georgia, serif",
+            fontSize: 'clamp(28px, 3.6vw, 48px)',
+            fontWeight: 400,
+            color: '#f3f0e8',
+            lineHeight: 0.9,
+            letterSpacing: '-0.02em',
+          }}
+        >
+          Mo Movahed
+        </div>
+        <div
+          style={{
+            fontFamily: "'Space Mono', monospace",
+            fontSize: '9px',
+            letterSpacing: '0.18em',
+            color: 'rgba(243, 240, 232, 0.62)',
+            textTransform: 'uppercase',
+            marginTop: '7px',
+          }}
+        >
+          CINEMATIC PHOTOGRAPHY &amp; ART DIRECTION · ENTER STORIES →
+        </div>
       </div>
 
-      {/* ── Lightbox Modal ───────────────────────────────────────────────── */}
       <PhotoLightbox
         photo={activePhoto}
         allPhotos={galleryImages}
