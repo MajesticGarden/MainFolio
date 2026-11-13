@@ -1,20 +1,46 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 
 export default function PhotoLightbox({ photo, allPhotos = [], onClose, onSelectPhoto, isMono }) {
   const dialogRef = useRef(null);
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [lightboxMono, setLightboxMono] = useState(isMono);
+  const activeThumbRef = useRef(null);
   const touchStartX = useRef(0);
 
-  const currentIndex = allPhotos.findIndex(p => p.file === photo);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [lightboxMono, setLightboxMono] = useState(isMono);
+  const [showInfo, setShowInfo] = useState(false);
+
+  const currentIndex = allPhotos.findIndex((p) => p.file === photo);
   const hasMultiple = allPhotos.length > 1;
 
-  // Sync initial mono mode with parent
   useEffect(() => {
     setLightboxMono(isMono);
   }, [isMono, photo]);
 
-  // Handle open/close with native <dialog>
+  // Center active thumbnail in bottom contact-sheet filmstrip
+  useEffect(() => {
+    if (activeThumbRef.current) {
+      activeThumbRef.current.scrollIntoView({
+        behavior: 'smooth',
+        inline: 'center',
+        block: 'nearest',
+      });
+    }
+  }, [currentIndex]);
+
+  // Preload adjacent high-res photographs once current frame settles
+  useEffect(() => {
+    if (!imageLoaded || !hasMultiple || currentIndex === -1) return;
+    const nextFile = allPhotos[(currentIndex + 1) % allPhotos.length]?.file;
+    const prevFile = allPhotos[(currentIndex - 1 + allPhotos.length) % allPhotos.length]?.file;
+    [nextFile, prevFile].forEach((f) => {
+      if (f) {
+        const preloader = new Image();
+        preloader.src = `/gallery/${encodeURIComponent(f)}`;
+      }
+    });
+  }, [imageLoaded, hasMultiple, currentIndex, allPhotos]);
+
+  // Manage native <dialog> lifecycle
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
@@ -28,16 +54,14 @@ export default function PhotoLightbox({ photo, allPhotos = [], onClose, onSelect
       dialog.close();
     }
 
-    // Light-dismiss fallback for browsers without closedby support (Safari)
     const handleBackdropClick = (event) => {
       if (event.target !== dialog) return;
       const rect = dialog.getBoundingClientRect();
-      const isDialogContent = (
+      const isDialogContent =
         rect.top <= event.clientY &&
         event.clientY <= rect.top + rect.height &&
         rect.left <= event.clientX &&
-        event.clientX <= rect.left + rect.width
-      );
+        event.clientX <= rect.left + rect.width;
       if (isDialogContent) return;
       onClose();
     };
@@ -74,23 +98,52 @@ export default function PhotoLightbox({ photo, allPhotos = [], onClose, onSelect
     onSelectPhoto(allPhotos[prevIdx].file);
   }, [allPhotos, currentIndex, hasMultiple, onSelectPhoto]);
 
-  // Keyboard navigation (Arrow keys + Esc)
+  // Keyboard shortcuts: Left/Right, I (Info HUD), B (B&W Toggle), Esc
   useEffect(() => {
     if (!photo) return;
     const onKeyDown = (e) => {
       if (e.key === 'ArrowRight') goToNext();
       if (e.key === 'ArrowLeft') goToPrev();
       if (e.key === 'Escape') onClose();
+      if (e.key.toLowerCase() === 'i') setShowInfo((v) => !v);
+      if (e.key.toLowerCase() === 'b') setLightboxMono((m) => !m);
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [photo, goToNext, goToPrev, onClose]);
 
-  if (!photo) return null;
+  const plateDetails = useMemo(() => {
+    if (!photo) return null;
+    const rawRef = photo.replace(/\.[^/.]+$/, '');
+    const plateNum = String((currentIndex >= 0 ? currentIndex : 0) + 1).padStart(3, '0');
+    let discipline = 'ARCHIVE STUDY';
+    if (/Mohammad|portrait|_DSC0[789]|_DSC10|_DSC11|_DSC2[123]/i.test(photo)) {
+      discipline = 'EDITORIAL PORTRAITURE';
+    } else if (/DSC_|_DSC7|_DSC9|_DSC6/i.test(photo)) {
+      discipline = 'DOCUMENTARY WEDDING';
+    } else if (/Street|Untitled|_DSC3|_DSC4|_DSC5/i.test(photo)) {
+      discipline = 'BRUTALIST STREET & AERIAL';
+    }
+    return { rawRef, plateNum, discipline };
+  }, [photo, currentIndex]);
 
-  const fileName = photo.replace(/\.[^/.]+$/, "");
+  if (!photo || !plateDetails) return null;
+
   const originalUrl = `/gallery/${encodeURIComponent(photo)}`;
   const thumbUrl = `/thumbs/${encodeURIComponent(photo)}`;
+
+  const controlBtnStyle = (active = false) => ({
+    background: active ? '#c85a32' : 'rgba(243, 240, 232, 0.06)',
+    border: active ? '1px solid #c85a32' : '1px solid rgba(243, 240, 232, 0.18)',
+    color: '#f3f0e8',
+    padding: '7px 13px',
+    fontFamily: "'Space Mono', monospace",
+    fontSize: '10px',
+    cursor: 'pointer',
+    letterSpacing: '0.12em',
+    textTransform: 'uppercase',
+    transition: 'all 0.2s ease',
+  });
 
   return (
     <dialog
@@ -111,164 +164,164 @@ export default function PhotoLightbox({ photo, allPhotos = [], onClose, onSelect
         position: 'fixed',
         inset: 0,
         zIndex: 10000,
+        cursor: 'auto',
         display: 'flex',
         flexDirection: 'column',
       }}
-      onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
+      onTouchStart={(e) => {
+        touchStartX.current = e.touches[0].clientX;
+      }}
       onTouchEnd={(e) => {
         const diff = e.changedTouches[0].clientX - touchStartX.current;
         if (diff > 50) goToPrev();
         else if (diff < -50) goToNext();
       }}
     >
-      {/* Dark Blur Backdrop */}
+      {/* Obsidian Darkroom Backdrop */}
       <div
         onClick={onClose}
         style={{
           position: 'absolute',
           inset: 0,
-          background: 'rgba(5, 5, 5, 0.94)',
-          backdropFilter: 'blur(25px)',
-          WebkitBackdropFilter: 'blur(25px)',
+          background: 'rgba(8, 8, 7, 0.96)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
           zIndex: 1,
         }}
       />
 
-      {/* Main Content Box */}
-      <div style={{
-        position: 'relative',
-        zIndex: 2,
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        padding: '24px 32px',
-        boxSizing: 'border-box',
-        pointerEvents: 'none',
-      }}>
-        {/* Top Header Bar */}
-        <div style={{
+      {/* Loupe Frame */}
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 2,
+          width: '100%',
+          height: '100%',
           display: 'flex',
+          flexDirection: 'column',
           justifyContent: 'space-between',
-          alignItems: 'center',
-          pointerEvents: 'auto',
-          fontFamily: "'Space Mono', monospace",
-          fontSize: '11px',
-          letterSpacing: '0.15em',
-          textTransform: 'uppercase',
-          color: 'rgba(255, 255, 255, 0.8)',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <span id="lightbox-title" style={{ fontWeight: 700, color: '#fff' }}>
-              {fileName}
+          padding: '20px 28px 16px',
+          boxSizing: 'border-box',
+          pointerEvents: 'none',
+        }}
+      >
+        {/* Top Control Bar */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '12px',
+            pointerEvents: 'auto',
+            fontFamily: "'Space Mono', monospace",
+            fontSize: '10px',
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            color: '#f3f0e8',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+            <span id="lightbox-title" style={{ fontWeight: 700, color: '#f3f0e8' }}>
+              PLATE {plateDetails.plateNum}
             </span>
+            <span style={{ color: '#c85a32' }}>// {plateDetails.discipline}</span>
             {currentIndex !== -1 && (
-              <span style={{ color: 'rgba(255, 255, 255, 0.4)' }}>
-                [{currentIndex + 1} / {allPhotos.length}]
+              <span style={{ color: 'rgba(243, 240, 232, 0.45)' }}>
+                [{currentIndex + 1} OF {allPhotos.length}]
               </span>
             )}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <button
-              onClick={() => setLightboxMono(m => !m)}
-              style={{
-                background: 'rgba(255, 255, 255, 0.08)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                color: '#fff',
-                padding: '6px 14px',
-                fontFamily: "'Space Mono', monospace",
-                fontSize: '10px',
-                cursor: 'pointer',
-                letterSpacing: '0.1em',
-                transition: 'all 0.2s',
-              }}
-            >
-              {lightboxMono ? 'VIEW IN COLOR' : 'VIEW IN B&W'}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <button onClick={() => setShowInfo((v) => !v)} style={controlBtnStyle(showInfo)}>
+              [I] {showInfo ? 'HIDE SPEC' : 'SPEC'}
             </button>
+
+            <button onClick={() => setLightboxMono((m) => !m)} style={controlBtnStyle(lightboxMono)}>
+              [B] {lightboxMono ? 'COLOR' : 'B&W'}
+            </button>
+
             <a
               href={originalUrl}
               target="_blank"
               rel="noopener noreferrer"
               style={{
-                color: 'rgba(255, 255, 255, 0.6)',
+                ...controlBtnStyle(false),
                 textDecoration: 'none',
-                borderBottom: '1px dotted rgba(255, 255, 255, 0.4)',
-                paddingBottom: '2px',
-                fontSize: '10px',
+                display: 'inline-block',
               }}
             >
-              OPEN RAW ↗
+              RAW ↗
             </a>
+
             <button
               onClick={onClose}
               aria-label="Close"
               style={{
-                background: 'white',
-                color: '#000',
+                background: '#f3f0e8',
+                color: '#0b0b0a',
                 border: 'none',
-                padding: '8px 18px',
+                padding: '8px 16px',
                 fontWeight: 700,
                 fontFamily: "'Space Mono', monospace",
-                fontSize: '11px',
+                fontSize: '10px',
                 cursor: 'pointer',
-                letterSpacing: '0.15em',
-                transition: 'transform 0.2s',
+                letterSpacing: '0.14em',
               }}
             >
-              ESC / CLOSE
+              ESC ✕
             </button>
           </div>
         </div>
 
-        {/* Center Image Container */}
-        <div style={{
-          flex: 1,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          position: 'relative',
-          padding: '16px 0',
-          minHeight: 0,
-        }}>
-          {/* Previous Arrow */}
+        {/* Center Optical Stage */}
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            position: 'relative',
+            padding: '12px 0',
+            minHeight: 0,
+          }}
+        >
           {hasMultiple && (
             <button
               onClick={goToPrev}
               aria-label="Previous photograph"
               style={{
                 position: 'absolute',
-                left: '12px',
+                left: '4px',
                 top: '50%',
                 transform: 'translateY(-50%)',
-                background: 'rgba(0, 0, 0, 0.5)',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                color: '#fff',
-                padding: '18px 16px',
+                background: 'rgba(11, 11, 10, 0.72)',
+                border: '1px solid rgba(243, 240, 232, 0.16)',
+                color: '#f3f0e8',
+                padding: '16px 15px',
                 cursor: 'pointer',
                 fontFamily: "'Space Mono', monospace",
                 fontSize: '16px',
                 zIndex: 10,
                 pointerEvents: 'auto',
-                transition: 'background 0.2s',
               }}
             >
               ‹
             </button>
           )}
 
-          {/* Photograph Element with Progressive Thumb-to-Master Reveal */}
-          <div style={{
-            position: 'relative',
-            maxWidth: '90vw',
-            maxHeight: '78vh',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            pointerEvents: 'auto',
-          }}>
-            {/* Instant Thumbnail Base (Loaded from memory cache) */}
+          <div
+            style={{
+              position: 'relative',
+              maxWidth: '88vw',
+              maxHeight: '70vh',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              pointerEvents: 'auto',
+            }}
+          >
             {!imageLoaded && (
               <img
                 src={thumbUrl}
@@ -277,21 +330,18 @@ export default function PhotoLightbox({ photo, allPhotos = [], onClose, onSelect
                 style={{
                   position: 'absolute',
                   maxWidth: '100%',
-                  maxHeight: '78vh',
+                  maxHeight: '70vh',
                   objectFit: 'contain',
-                  filter: lightboxMono ? 'grayscale(100%) contrast(1.15) blur(8px)' : 'blur(8px)',
-                  transform: 'scale(0.99)',
+                  filter: lightboxMono ? 'grayscale(100%) contrast(1.1) blur(8px)' : 'blur(8px)',
                   opacity: 0.85,
                   pointerEvents: 'none',
-                  transition: 'opacity 0.4s ease',
                 }}
               />
             )}
 
-            {/* High-Res RAW Master Image */}
             <img
               src={originalUrl}
-              alt={fileName}
+              alt={`Mo Movahed Plate ${plateDetails.plateNum}`}
               fetchpriority="high"
               decoding="async"
               onLoad={() => setImageLoaded(true)}
@@ -304,39 +354,63 @@ export default function PhotoLightbox({ photo, allPhotos = [], onClose, onSelect
               }}
               style={{
                 maxWidth: '100%',
-                maxHeight: '78vh',
+                maxHeight: '70vh',
                 objectFit: 'contain',
                 display: 'block',
                 position: 'relative',
                 zIndex: 2,
-                boxShadow: '0 25px 80px rgba(0, 0, 0, 0.95)',
-                filter: lightboxMono ? 'grayscale(100%) contrast(1.15)' : 'none',
+                boxShadow: '0 24px 80px rgba(0, 0, 0, 0.92)',
+                filter: lightboxMono ? 'grayscale(100%) contrast(1.1)' : 'none',
                 opacity: imageLoaded ? 1 : 0,
-                transition: 'opacity 0.35s ease, filter 0.4s ease',
+                transition: 'opacity 0.3s ease, filter 0.35s ease',
               }}
             />
+
+            {/* Optional Toggleable Archival Spec Card ([I] Key) */}
+            {showInfo && (
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '14px',
+                  left: '14px',
+                  zIndex: 12,
+                  background: 'rgba(11, 11, 10, 0.9)',
+                  backdropFilter: 'blur(12px)',
+                  WebkitBackdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(243, 240, 232, 0.18)',
+                  padding: '12px 16px',
+                  fontFamily: "'Space Mono', monospace",
+                  fontSize: '10px',
+                  letterSpacing: '0.12em',
+                  color: '#f3f0e8',
+                  lineHeight: 1.7,
+                }}
+              >
+                <div style={{ color: '#c85a32' }}>ARCHIVE FILE // {plateDetails.rawRef}</div>
+                <div>COLLECTION // {plateDetails.discipline}</div>
+                <div style={{ opacity: 0.65 }}>EDITION // GLASGOW, UK — SIGNED PRINT AVAILABLE</div>
+              </div>
+            )}
           </div>
 
-          {/* Next Arrow */}
           {hasMultiple && (
             <button
               onClick={goToNext}
               aria-label="Next photograph"
               style={{
                 position: 'absolute',
-                right: '12px',
+                right: '4px',
                 top: '50%',
                 transform: 'translateY(-50%)',
-                background: 'rgba(0, 0, 0, 0.5)',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                color: '#fff',
-                padding: '18px 16px',
+                background: 'rgba(11, 11, 10, 0.72)',
+                border: '1px solid rgba(243, 240, 232, 0.16)',
+                color: '#f3f0e8',
+                padding: '16px 15px',
                 cursor: 'pointer',
                 fontFamily: "'Space Mono', monospace",
                 fontSize: '16px',
                 zIndex: 10,
                 pointerEvents: 'auto',
-                transition: 'background 0.2s',
               }}
             >
               ›
@@ -344,23 +418,79 @@ export default function PhotoLightbox({ photo, allPhotos = [], onClose, onSelect
           )}
         </div>
 
-        {/* Bottom Metadata & Navigation Helper */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          pointerEvents: 'auto',
-          fontFamily: "'Space Mono', monospace",
-          fontSize: '10px',
-          letterSpacing: '0.12em',
-          textTransform: 'uppercase',
-          color: 'rgba(255, 255, 255, 0.45)',
-        }}>
-          <div>
-            SWIPE OR USE ← / → ARROW KEYS TO EXPLORE
-          </div>
-          <div>
-            GLASGOW / GLOBAL ARCHIVE
+        {/* Bottom Contact-Sheet Filmstrip Scrubber */}
+        <div style={{ pointerEvents: 'auto' }}>
+          {hasMultiple && (
+            <div
+              style={{
+                display: 'flex',
+                gap: '6px',
+                overflowX: 'auto',
+                padding: '8px 0 6px',
+                borderTop: '1px solid rgba(243, 240, 232, 0.1)',
+                scrollbarWidth: 'thin',
+              }}
+            >
+              {allPhotos.map((item, idx) => {
+                const isActive = idx === currentIndex;
+                return (
+                  <button
+                    key={item.file}
+                    ref={isActive ? activeThumbRef : null}
+                    onClick={() => {
+                      if (!isActive) {
+                        setImageLoaded(false);
+                        onSelectPhoto(item.file);
+                      }
+                    }}
+                    title={`Jump to Plate ${idx + 1}`}
+                    style={{
+                      flexShrink: 0,
+                      width: '52px',
+                      height: '38px',
+                      padding: 0,
+                      background: '#141412',
+                      border: isActive
+                        ? '1px solid #c85a32'
+                        : '1px solid rgba(243, 240, 232, 0.12)',
+                      opacity: isActive ? 1 : 0.42,
+                      cursor: 'pointer',
+                      overflow: 'hidden',
+                      transition: 'opacity 0.2s ease, border-color 0.2s ease',
+                    }}
+                  >
+                    <img
+                      src={`/thumbs/${encodeURIComponent(item.file)}`}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        display: 'block',
+                        filter: lightboxMono ? 'grayscale(100%)' : 'none',
+                      }}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              fontFamily: "'Space Mono', monospace",
+              fontSize: '9px',
+              letterSpacing: '0.14em',
+              color: 'rgba(243, 240, 232, 0.42)',
+              marginTop: '4px',
+            }}
+          >
+            <span>KEYS: ←/→ NAVIGATE · [I] SPEC · [B] FILM · [ESC] CLOSE</span>
+            <span>MO MOVAHED MONOGRAPH</span>
           </div>
         </div>
       </div>
